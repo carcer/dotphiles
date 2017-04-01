@@ -30,3 +30,4 @@ if [[ -f $DIR/packages/apt ]]; then
   sudo apt-get install $packages
 fi
 
+curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.1/install.sh | bash
