@@ -51,7 +51,7 @@ ZSH_CUSTOM=$HOME/.dotfiles/zsh/custom
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git docker git-flow github node npm tmux tmuxinator zsh-syntax-highlighting nvm zsh-completion)
+plugins=(git docker git-flow github node npm tmux tmuxinator zsh-syntax-highlighting nvm zsh-completion zsh-autosuggestions)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -84,4 +84,5 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
-
+ZSH_HIGHLIGHT_HIGHLIGHTERS+=(pattern)
+ZSH_HIGHLIGHT_PATTERNS+=('rm*-rf*' 'fg=white,bold,bg=red')
