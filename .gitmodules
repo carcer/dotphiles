@@ -16,3 +16,6 @@
 [submodule "vim/dotvim"]
 	path = vim/dotvim
 	url = https://github.com/dotphiles/dotvim.git
+[submodule "zsh/prezto"]
+	path = zsh/prezto
+	url = https://github.com/zsh-users/prezto.git

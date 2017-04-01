@@ -74,6 +74,8 @@ zsh/zlogout
 zsh/zprofile
 zsh/zshenv
 zsh/zshrc
+zsh/zpreztorc
+zsh/prezto:.zprezto
 [endfiles]
 
 # Hosts to sync

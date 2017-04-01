@@ -1,19 +1,11 @@
 #
-# dotphiles : https://github.com/dotphiles/dotphiles
-#
 # Defines environment variables.
 #
 # Authors:
-#   Ben O'Hara <bohara@gmail.com>
+#   Sorin Ionescu <sorin.ionescu@gmail.com>
 #
 
-# Dont read global configs
-unsetopt GLOBAL_RCS
-
-# Set the path to dotzsh.
-export DOTZSH="$HOME/.zsh"
-
-# Source environment settings
-#source "$DOTZSH/env.zsh"
-
-# Customize to your needs...
+# Ensure that a non-login, non-interactive shell has a defined environment.
+if [[ "$SHLVL" -eq 1 && ! -o LOGIN && -s "${ZDOTDIR:-$HOME}/.zprofile" ]]; then
+  source "${ZDOTDIR:-$HOME}/.zprofile"
+fi
