@@ -32,7 +32,13 @@ zstyle ':prezto:load' pmodule \
   'spectrum' \
   'utility' \
   'completion' \
-  'prompt'
+  'prompt' \
+  'git' \
+  'command-not-found' \
+  'directory' \
+  'node' \
+  'tmux' \
+  'syntax-highlighting'
 
 #
 # Deer
