@@ -9,9 +9,8 @@
 
 # Global Config
 [user]
-    #name = "**Your Name**"
-    #email = "**Your Email**"
-    #signingkey = **Your GPG ID**
+    name = "Chris Canal"
+    email = "dhtmlgod@gmail.com"
 
 [branch "master"]
     remote = origin
