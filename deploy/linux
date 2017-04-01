@@ -30,3 +30,4 @@ if [[ -f $DIR/packages/apt ]]; then
   sudo apt-get install $packages
 fi
 
+sh $DIR/oh-my-zsh.sh
