@@ -11,5 +11,6 @@ zsh
 git
 vim
 tmux
+jq
 #nmap
 

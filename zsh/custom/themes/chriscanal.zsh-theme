@@ -111,18 +111,18 @@ bureau_precmd () {
 # get the node.js version
 function my_nvm_prompt_info() {
   [ -f package.json ] || return
-  [ -f "$HOME/.nvm/nvm.sh" ] || return
+
   local nvm_prompt
   nvm_prompt=$(node -v 2>/dev/null)
   [[ "${nvm_prompt}x" == "x" ]] && return
   nvm_prompt=${nvm_prompt:1}
 
   local ver engine
-  engine=$(cat package.json | jsawk 'return this.engines && this.engines["node"]')
+  engine=$(cat package.json | jq  --raw-output '.engines.node')
 
   local nvm_color='036'
 
-  if [ ! -z $engine ]; then
+  if [ $engine != null ]; then
     ver=`semver ${nvm_prompt} -l -r ${engine}`
   else
     ver='yup'

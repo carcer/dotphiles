@@ -31,3 +31,5 @@ if [[ -f $DIR/packages/apt ]]; then
 fi
 
 sh $DIR/oh-my-zsh.sh
+curl -L http://github.com/micha/jsawk/raw/master/jsawk > jsawk
+chmod 755 jsawk && mv jsawk ~/bin/
