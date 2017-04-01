@@ -18,7 +18,7 @@ DOTFILES=.dotfiles
 [files]
 # Uncomment examples below
 dotsyncrc
-#ack/ackrc
+ack/ackrc
 #aptitude
 bin:bin
 ctags/ctags
@@ -43,6 +43,9 @@ git/gitattributes
 #mysql/my.cnf
 #ncmpcpp/config
 #ncmpcpp/error.log
+neovim/init.vim:.config/nvim/init.vim
+neovim/local_init.vim:.config/nvim/local_init.vim
+neovim/local_bundles.vim:.config/nvim/local_bundles.vim
 #postgresql/psqlrc
 #python/pythonrc
 #python/pylintrc
