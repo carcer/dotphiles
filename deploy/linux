@@ -27,7 +27,7 @@ if [[ -f $DIR/packages/apt ]]; then
       packages="$packages $line"
     fi
   done
-  sudo apt-get install $packages
+  sudo apt-get -y install $packages
 fi
 
 sh $DIR/oh-my-zsh.sh
