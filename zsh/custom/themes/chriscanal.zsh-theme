@@ -7,8 +7,8 @@ ZSH_THEME_NVM_PROMPT_SUFFIX=""
 
 ### Git [±master ▾•]
 local red=001
-local green=002
-local yellow=003
+local green=155
+local yellow=226
 local magenta=200
 local cyan=013
 
@@ -137,10 +137,10 @@ function my_nvm_prompt_info() {
   echo " %F{${nvm_color}}${ZSH_THEME_NVM_PROMPT_PREFIX}%F{${nvm_color}}${nvm_prompt}%F{${nvm_color}}${ZSH_THEME_NVM_PROMPT_SUFFIX}%f"
 }
 
-
+local green='022'
 setopt prompt_subst
-PROMPT="%F{yellow}%T$(my_nvm_prompt_info) %F{magenta}${SSH_TTY:+%n@%m }%F{cyan}%1~%f$(bureau_git_prompt)
-%(!.%B%F{red}#%f%b.%B%(?.%F{green}.%F{red})❯%f%b) "
+PROMPT='%F{yellow}%T$(my_nvm_prompt_info) %F{magenta}${SSH_TTY:+%n@%m }%F{cyan}%1~%f$(bureau_git_prompt)
+%(!.%B%F{red}#%f%b.%B%(?.%F{$green}.%F{red})❯%f%b) '
 RPROMPT=''
 
 autoload -U add-zsh-hook
