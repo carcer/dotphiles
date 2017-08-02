@@ -1,6 +1,6 @@
-# ~/.tmuxinator/stormideas-admin.yml
+# ~/.tmuxinator/dst.yml
 
-name: stormideas-admin
+name: dst
 root: .
 
 # Optional tmux socket
@@ -31,12 +31,6 @@ windows:
   - editor:
       layout: main-vertical
       panes:
-        - vim .
-        - cd admin-ui && API_URL=http://172.16.226.129:8080 NO_SSL=true nr start
         - #
-  - server:
-      layout: main-horizontal
-      panes:
+        - nr start
         - #
-        - cd api-design/src && npm run dev
-        - cd inspinia && gulp
