@@ -1,0 +1,10 @@
+project_root: ~/development/clients/stormideas/abc-internal
+project_name: abc-int
+windows:
+  - editor:
+      layout: main-vertical
+      panes:
+        - code .
+        - nr start
+        - cd ~/development/tools/dynamo && java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb
+        - #

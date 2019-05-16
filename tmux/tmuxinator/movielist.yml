@@ -1,0 +1,18 @@
+project_root: ~/development/clients/stormideas/hallmark/hallmark-moviechecklist
+project_name: movielist
+windows:
+  - editor:
+      layout: main-vertical
+      panes:
+        - code ../hallmark-moviechecklist.code-workspace && cl
+        - cd admin-client && cl
+        - cd server && cl
+        - cd server/host/Hallmark.MovieChecklist.Admin && cl
+  - server:
+      layout: main-vertical
+      panes:
+        - cd admin-client && nr start
+        - cd admin-client && nr storybook
+        - docker-compose up -d  && cd server && rider *.sln
+        - #cd server && dotnet clean && dotnet restore && cd host/Hallmark.MovieChecklist.Admin && dotnet watch run && cd ../../
+        - #cd server && dotnet clean && dotnet restore && cd host/Hallmark.MovieChecklist.Client && dotnet watch run && cd ../../

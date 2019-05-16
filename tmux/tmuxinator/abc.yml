@@ -1,0 +1,17 @@
+project_root: ~/development/clients/stormideas/abcnews/abcnews-contenttools
+project_name: abc
+windows:
+  - editor:
+      layout: main-vertical
+      panes:
+        - code ../ABCNews.code-workspace && cl
+        - cd react && cl
+        - cd src && cl
+        - cd ../abcnews-config && cl
+  - server:
+      layout: main-vertical
+      panes:
+        - cd react && nr start
+        - cd react && nr storybook
+        - docker start sad_lamarr
+        - # dotnet clean &&dotnet restore && cd src/StormIdeas.ABCNews.ContentTools.AdminAPI && dotnet watch run
