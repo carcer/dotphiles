@@ -19,23 +19,38 @@ DIR=$(cd $(dirname "$0"); pwd)
 # apt-get
 ###############################################################################
 
+# if [[ -f $DIR/packages/apt ]]; then
+#   exec<$DIR/packages/apt
+#   while read line
+#   do
+#     if [[ ! "$line" =~ (^#|^$) ]]; then
+#       packages="$packages $line"
+#     fi
+#   done
+#   sudo apt-get -y install $packages
+# fi
+
+###############################################################################
+# pacman
+###############################################################################
+
 if [[ -f $DIR/packages/apt ]]; then
   exec<$DIR/packages/apt
   while read line
-  do
+  do  
     if [[ ! "$line" =~ (^#|^$) ]]; then
       packages="$packages $line"
     fi
   done
-  sudo apt-get -y install $packages
+  sudo pacman -S --noconfirm $packages
 fi
 
 sh $DIR/oh-my-zsh.sh
 curl -L http://github.com/micha/jsawk/raw/master/jsawk > jsawk
 chmod 755 jsawk && mv jsawk ~/bin/
-sudo update-alternatives --install /usr/bin/vi vi /usr/bin/nvim 60
-sudo update-alternatives --config vi
-sudo update-alternatives --install /usr/bin/vim vim /usr/bin/nvim 60
-sudo update-alternatives --config vim
-sudo update-alternatives --install /usr/bin/editor editor /usr/bin/nvim 60
-sudo update-alternatives --config editor
+# sudo update-alternatives --install /usr/bin/vi vi /usr/bin/nvim 60
+# sudo update-alternatives --config vi
+# sudo update-alternatives --install /usr/bin/vim vim /usr/bin/nvim 60
+# sudo update-alternatives --config vim
+# sudo update-alternatives --install /usr/bin/editor editor /usr/bin/nvim 60
+# sudo update-alternatives --config editor
