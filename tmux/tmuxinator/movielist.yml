@@ -13,6 +13,6 @@ windows:
       panes:
         - cd admin-client && nr start
         - cd admin-client && nr storybook
-        - docker-compose up -d  && cd server && rider *.sln
+        - docker-compose up -d
         - #cd server && dotnet clean && dotnet restore && cd host/Hallmark.MovieChecklist.Admin && dotnet watch run && cd ../../
         - #cd server && dotnet clean && dotnet restore && cd host/Hallmark.MovieChecklist.Client && dotnet watch run && cd ../../

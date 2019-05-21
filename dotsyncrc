@@ -23,7 +23,7 @@ ack/ackrc
 bin:bin
 ctags/ctags
 #cmus
-curl/curlrc
+#curl/curlrc
 git/gitconfig
 git/gitignore
 git/gitattributes
@@ -65,6 +65,7 @@ neovim/local_bundles.vim:.config/nvim/local_bundles.vim
 #task/task
 #task/taskrc
 tmux/tmux.conf
+tmux/tmux.local.conf
 tmux/tmuxinator
 vim/dotvim:.vim
 vim/vimrc

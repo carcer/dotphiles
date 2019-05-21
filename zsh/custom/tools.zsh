@@ -78,7 +78,7 @@ function gfea() {
   git commit -m "$msg"
 }
 
-alias gp='git push'
+alias gp='git push -u'
 
 function gcp() {
   args=$@
