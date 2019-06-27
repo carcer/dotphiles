@@ -98,6 +98,10 @@ function bdmachine() {
   eval "$(docker-machine env default)"
 }
 
+#tmux
+alias tx=tmuxinator
+alias tkill='tmux kill-server'
+
 alias dm='docker-machine'
 
 # Dev short-cuts.
@@ -154,6 +158,8 @@ fi
 
 # Lists the ten most used commands.
 alias history-stat="history 0 | awk '{print \$2}' | sort | uniq -c | sort -n -r | head"
+
+
 
 # ==================================================================
 # = Functions =

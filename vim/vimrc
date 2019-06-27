@@ -22,7 +22,10 @@ if has("user_commands")
   source ~/.vim/vundles.vim
   " Add extra bundles here...
   " Bundle 'reponame'
-  Bundle 'altercation/solarized'
+  Bundle 'airblade/vim-gitgutter'
+  Bundle 'othree/yajs.vim'
+  Bundle 'vim-javascript'
+  Bundle 'mxw/vim-jsx'
 endif
 
 " Customize to your needs...

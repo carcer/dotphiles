@@ -141,6 +141,7 @@
 
 [push]
     default = current
+	followTags = true
 
 [url "git@github.com:"]
     insteadof = github:

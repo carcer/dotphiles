@@ -8,11 +8,14 @@ windows:
         - cd admin-client && cl
         - cd server && cl
         - cd server/host/Hallmark.MovieChecklist.Admin && cl
-  - server:
-      layout: main-vertical
+  - client:
+      layout: tiled
       panes:
-        - cd admin-client && nr start
-        - cd admin-client && nr storybook
+        - cd admin-client && cl && nr start
+        - cd admin-client && cl && nr storybook
+  - server:
+      layout: tiled
+      panes:
         - docker-compose up -d
-        - #cd server && dotnet clean && dotnet restore && cd host/Hallmark.MovieChecklist.Admin && dotnet watch run && cd ../../
-        - #cd server && dotnet clean && dotnet restore && cd host/Hallmark.MovieChecklist.Client && dotnet watch run && cd ../../
+        - cd server/host/Hallmark.MovieChecklist.Client && dotnet build && dotnet watch run
+        - cd server/host/Hallmark.MovieChecklist.Admin && dotnet build && dotnet watch run
