@@ -389,3 +389,6 @@ function preview() {
   [[ -z "$item" ]] && item='.'
   open $1 -a 'Preview'
 }
+
+alias core3='export DOTNET_ROOT=$HOME/dotnet3 && export PATH=$HOME/dotnet3:$PATH && dotnet --version'
+alias core31='export DOTNET_ROOT=$HOME/dotnet && export PATH=$HOME/dotnet:$PATH && dotnet --version'

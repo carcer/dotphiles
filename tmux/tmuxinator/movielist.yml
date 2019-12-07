@@ -7,7 +7,7 @@ windows:
         - code ../hallmark-moviechecklist.code-workspace && cl
         - cd admin-client && cl
         - cd server && cl
-        - cd server/host/Hallmark.MovieChecklist.Admin && cl
+        - cd server/src/Hallmark.MovieChecklist.DbMigrator
   - client:
       layout: tiled
       panes:
