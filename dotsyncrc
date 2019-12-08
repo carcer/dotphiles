@@ -84,6 +84,7 @@ zsh/zshrc
 [hosts]
 chris-XPS-13-9360		git=ANY
 xps 		git=ANY
+xps-2019 		git=ANY
 #host1.example.com               git=ANY                        files=custom/dotfile    #git repo, pull from anywhere and link a custom dotfile
 #host2.example.com               git=ANY                                                #git repo, pull from anywhere
 #host3.example.com               git=ANY                                                #git repo, pull from anywhere
