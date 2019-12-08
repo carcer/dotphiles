@@ -60,7 +60,7 @@ neovim/local_bundles.vim:.config/nvim/local_bundles.vim
 #screen/screenrc
 #shell/hushlogin
 #shell/urlview
-#ssh
+ssh
 #subversion
 #task/task
 #task/taskrc
