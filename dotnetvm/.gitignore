@@ -7,4 +7,4 @@
 # Except this file
 !.gitignore
 
-!bash.sh
+!dotnetvm.sh
