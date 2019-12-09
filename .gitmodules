@@ -15,7 +15,7 @@
 	url = https://github.com/dotphiles/dotzsh.git
 [submodule "vim/dotvim"]
 	path = vim/dotvim
-	url = https://github.com/dotphiles/dotvim.git
+	url = git@github.com:carcer/dotvim.git
 [submodule "zsh/custom/zsh-syntax-highlighting"]
 	path = zsh/custom/zsh-syntax-highlighting
 	url = git@github.com:zsh-users/zsh-syntax-highlighting.git

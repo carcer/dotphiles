@@ -141,7 +141,13 @@
 
 [push]
     default = current
+	followTags = true
 
 [url "git@github.com:"]
     insteadof = github:
 
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true

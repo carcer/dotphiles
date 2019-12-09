@@ -23,7 +23,7 @@ ack/ackrc
 bin:bin
 ctags/ctags
 #cmus
-curl/curlrc
+#curl/curlrc
 dotnetvm
 git/gitconfig
 git/gitignore
@@ -66,6 +66,7 @@ ssh
 #task/task
 #task/taskrc
 tmux/tmux.conf
+tmux/tmux.local.conf
 tmux/tmuxinator
 vim/dotvim:.vim
 vim/vimrc
