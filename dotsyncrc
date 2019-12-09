@@ -24,6 +24,7 @@ bin:bin
 ctags/ctags
 #cmus
 curl/curlrc
+dotnetvm
 git/gitconfig
 git/gitignore
 git/gitattributes

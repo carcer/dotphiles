@@ -87,5 +87,5 @@ fi
 function gi() { curl https://www.gitignore.io/api/$@ ;}
 
 SPACESHIP_PROMPT_ADD_NEWLINE=false
-# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
-export PATH="$PATH:$HOME/.rvm/bin"
+# Add dotnetvm to PATH for scripting. Make sure this is the last PATH variable change.
+export PATH="$PATH:$HOME/.dotnetvm/bin"
