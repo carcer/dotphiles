@@ -10,7 +10,7 @@
 # Global Config
 [user]
     name = "Chris Canal"
-    email = "dhtmlgod@gmail.com"
+    email = "chris@stormideas.com"
 
 [branch "master"]
     remote = origin
