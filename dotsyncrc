@@ -35,6 +35,7 @@ git/gitattributes
 #input/editrc
 #input/inputrc
 #irssi
+k6
 #mpd/mpd.conf
 #mercurial/hgrc
 #mercurial/hgignore
