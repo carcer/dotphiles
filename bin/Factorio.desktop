@@ -1,0 +1,7 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Name=Factorio
+Exec=/home/chris/factorio/bin/x64/factorio
+Icon=/home/chris/factorio/data/core/graphics/factorio.png
+Type=application
+Categories=Game;
