@@ -18,6 +18,7 @@ DOTFILES=.dotfiles
 [files]
 # Uncomment examples below
 dotsyncrc
+aws
 ack/ackrc
 #aptitude
 bin:bin
@@ -30,6 +31,7 @@ git/gitignore
 git/gitattributes
 #git/tigrc
 #git/gitk
+gitversion
 #gnupg
 #grc
 #input/editrc

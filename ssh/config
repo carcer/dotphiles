@@ -4,7 +4,9 @@ Host github.com
   User git
   IdentityFile ~/.ssh/master/id_rsa
 
-Host github-stormideas
-  HostName github.com
+#Default bitbucket.org
+Host bitbucket.org
+  HostName bitbucket.org
   User git
-  IdentityFile ~/.ssh/master/id_rsa_stormideas
+  IdentityFile ~/.ssh/master/id_rsa
+
