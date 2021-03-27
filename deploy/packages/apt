@@ -7,10 +7,10 @@
 #    Ben O'Hara <bohara@gmail.com>
 #
 
-zsh
-git
+#zsh
+#git
 vim
-tmux
+#tmux
 jq
 nvm
 code
