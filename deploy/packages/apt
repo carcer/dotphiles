@@ -13,6 +13,6 @@ vim
 tmux
 jq
 nvm
-neovim
+#neovim
 #nmap
 
