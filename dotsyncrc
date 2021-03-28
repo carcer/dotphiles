@@ -25,6 +25,7 @@ bin:bin
 ctags/ctags
 #cmus
 #curl/curlrc
+config/rofi:.config/rofi
 dotnetvm
 git/gitconfig
 git/gitignore
