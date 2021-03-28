@@ -352,13 +352,31 @@ bindsym $mod+m bar mode toggle
 
 # Theme colors
 # class                   border  backgr. text    indic.   child_border
-  client.focused          #556064 #556064 #80FFF9 #FDF6E3
-  client.focused_inactive #2F3D44 #2F3D44 #1ABC9C #454948
-  client.unfocused        #2F3D44 #2F3D44 #1ABC9C #454948
-  client.urgent           #CB4B16 #FDF6E3 #1ABC9C #268BD2
-  client.placeholder      #000000 #0c0c0c #ffffff #000000 
+ # client.focused          #556064 #556064 #80FFF9 #FDF6E3
+ # client.focused_inactive #2F3D44 #2F3D44 #1ABC9C #454948
+ # client.unfocused        #2F3D44 #2F3D44 #1ABC9C #454948
+ # client.urgent           #CB4B16 #FDF6E3 #1ABC9C #268BD2
+ # client.placeholder      #000000 #0c0c0c #ffffff #000000 
 
   client.background       #2B2C2B
+
+#client.focused          #0a0f14 #0a0f14 #504945 #504945
+#client.focused_inactive #050a0f #050a0f #555555 #555555
+#client.unfocused        #050a0f #050a0f #555555 #555555
+#client.urgent           #ff5555 #ff5555 #ff5555 #ff5555
+
+# Solarized
+client.focused          #073642 #073642 #504945 #504945
+client.focused_inactive #012934 #012934 #555555 #555555
+client.unfocused        #012934 #012934 #555555 #555555
+client.urgent           #ff5555 #ff5555 #ff5555 #ff5555
+
+# Gruvbox
+#client.focused          #222222 #222222 #272727 #272727
+#client.focused_inactive #111111 #111111 #222222 #222222
+#client.unfocused        #111111 #111111 #222222 #222222
+#client.urgent           #ff5555 #ff5555 #ff5555 #ff5555
+
 
 #############################
 ### settings for i3-gaps: ###
