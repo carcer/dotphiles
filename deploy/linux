@@ -42,12 +42,11 @@ if [[ -f $DIR/packages/apt ]]; then
       packages="$packages $line"
     fi
   done
-  sudo pacman -S --noconfirm $packages
+  sudo pamac install --no-confirm $packages
 fi
 
 sh $DIR/oh-my-zsh.sh
-curl -L http://github.com/micha/jsawk/raw/master/jsawk > jsawk
-chmod 755 jsawk && mv jsawk ~/bin/
+
 # sudo update-alternatives --install /usr/bin/vi vi /usr/bin/nvim 60
 # sudo update-alternatives --config vi
 # sudo update-alternatives --install /usr/bin/vim vim /usr/bin/nvim 60

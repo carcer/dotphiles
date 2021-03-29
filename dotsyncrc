@@ -26,6 +26,7 @@ ctags/ctags
 #cmus
 #curl/curlrc
 config/rofi:.config/rofi
+config/picom.conf:.config/picom.conf
 dotnetvm
 git/gitconfig
 git/gitignore

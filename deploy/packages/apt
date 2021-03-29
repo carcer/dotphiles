@@ -16,7 +16,12 @@ jq
 nvm
 code
 rofi
+rofi-dmenu
 kitty
 #neovim
 #nmap
-
+jetbrains-toolsbox
+docker
+docker-compose
+dotnet-sdk
+nerd-fonts-fira-code
