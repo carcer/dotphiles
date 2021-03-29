@@ -27,13 +27,14 @@ font xft:URWGothic-Book 11
 floating_modifier $mod
 
 # start a terminal
-bindsym $mod+Return exec kitty
+bindsym $mod+Return exec i3-sensible-terminal
 
 # kill focused window
 bindsym $mod+Shift+q kill
 
 # start program launcher
 bindsym $mod+d exec --no-startup-id rofi -show drun 
+bindsym $mod+Shift+d exec --no-startup-id rofi -show window 
 
 # launch categorized menu
 bindsym $mod+z exec --no-startup-id morc_menu
@@ -321,11 +322,11 @@ set_from_resource $term_color13    color13
 set_from_resource $term_color14    color14
 set_from_resource $term_color15    color15
 
-# Start i3bar to display a workspace bar (plus the system information i3status if available)
 bar {
         mode hide
-	i3bar_command i3bar
-	status_command i3status
+        status_command SCRIPT_DIR=~/.dotfiles/i3blocks/i3blocks-contrib i3blocks -c ~/.config/i3blocks/config
+	# i3bar_command i3bar
+	# status_command i3status
 	position bottom
 
 ## please set your primary output first. Example: 'xrandr --output eDP1 --primary'
@@ -354,6 +355,7 @@ bar {
 # hide/unhide i3status bar
 bindsym $mod+m bar mode toggle
 
+# Solarized
 # class                   border  backgr. text    indic.   child_border
 client.focused          #2e7677 #2e7677 #F8F8F2 #2e7677   #2e7677
 client.focused_inactive #839496 #44475A #F8F8F2 #44475A   #44475A
@@ -377,12 +379,6 @@ client.background       #002b36
 #client.unfocused        #050a0f #050a0f #555555 #555555
 #client.urgent           #ff5555 #ff5555 #ff5555 #ff5555
 
-# Solarized
-#client.focused          #073642 #073642 #504945 #504945
-#client.focused_inactive #012934 #012934 #555555 #555555
-#client.unfocused        #012934 #012934 #555555 #555555
-#client.urgent           #ff5555 #ff5555 #ff5555 #ff5555
-
 # Gruvbox
 #client.focused          #222222 #222222 #272727 #272727
 #client.focused_inactive #111111 #111111 #222222 #222222
@@ -395,7 +391,7 @@ client.background       #002b36
 #############################
 
 # Set inner/outer gaps
-gaps inner 14
+gaps inner 10
 gaps outer -2
 
 # Additionally, you can issue commands with the following syntax. This is useful to bind keys to changing the gap size.

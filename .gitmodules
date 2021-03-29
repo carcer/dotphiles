@@ -31,3 +31,6 @@
 [submodule "zsh/custom/themes/spaceship-prompt"]
 	path = zsh/custom/themes/spaceship-prompt
 	url = https://github.com/denysdovhan/spaceship-prompt.git
+[submodule "i3blocks/i3blocks-contrib"]
+	path = i3blocks/i3blocks-contrib
+	url = https://github.com/vivien/i3blocks-contrib.git

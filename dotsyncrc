@@ -39,6 +39,8 @@ gitversion
 #gnupg
 #grc
 i3
+i3blocks:.config/i3blocks
+i3status/i3status.conf:.config/i3status/config
 #input/editrc
 #input/inputrc
 #irssi
