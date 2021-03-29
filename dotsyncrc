@@ -28,6 +28,7 @@ ctags/ctags
 #curl/curlrc
 config/rofi:.config/rofi
 config/picom.conf:.config/picom.conf
+kitty:.config/kitty
 dotnetvm
 git/gitconfig
 git/gitignore

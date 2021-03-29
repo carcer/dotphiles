@@ -338,21 +338,29 @@ bar {
 	strip_workspace_numbers yes
 
     colors {
-        background #222D31
-        statusline #F9FAF9
-        separator  #454947
+        background #002b36
+        statusline #839496
+        separator  #2e7677
 
 #                      border  backgr. text
-        focused_workspace  #F9FAF9 #16a085 #292F34
-        active_workspace   #595B5B #353836 #FDF6E3
+        focused_workspace  #2e7677 #2e7677 #F8F8F2
+        active_workspace   #839496 #44475A #F8F8F2
         inactive_workspace #595B5B #222D31 #EEE8D5
         binding_mode       #16a085 #2C2C2C #F9FAF9
-        urgent_workspace   #16a085 #FDF6E3 #E5201D
+        urgent_workspace   #282A36 #859900 #FFFFFF
     }
 }
 
 # hide/unhide i3status bar
 bindsym $mod+m bar mode toggle
+
+# class                   border  backgr. text    indic.   child_border
+client.focused          #2e7677 #2e7677 #F8F8F2 #2e7677   #2e7677
+client.focused_inactive #839496 #44475A #F8F8F2 #44475A   #44475A
+client.unfocused        #282A36 #282A36 #BFBFBF #282A36   #073642
+client.urgent           #282A36 #859900 #FFFFFF #859900   #859900 
+client.placeholder      #282A36 #282A36 #F8F8F2 #282A36   #282A36
+client.background       #002b36 
 
 # Theme colors
 # class                   border  backgr. text    indic.   child_border
@@ -362,7 +370,7 @@ bindsym $mod+m bar mode toggle
  # client.urgent           #CB4B16 #FDF6E3 #1ABC9C #268BD2
  # client.placeholder      #000000 #0c0c0c #ffffff #000000 
 
-  client.background       #2B2C2B
+#client.background       #2B2C2B
 
 #client.focused          #0a0f14 #0a0f14 #504945 #504945
 #client.focused_inactive #050a0f #050a0f #555555 #555555
@@ -370,10 +378,10 @@ bindsym $mod+m bar mode toggle
 #client.urgent           #ff5555 #ff5555 #ff5555 #ff5555
 
 # Solarized
-client.focused          #073642 #073642 #504945 #504945
-client.focused_inactive #012934 #012934 #555555 #555555
-client.unfocused        #012934 #012934 #555555 #555555
-client.urgent           #ff5555 #ff5555 #ff5555 #ff5555
+#client.focused          #073642 #073642 #504945 #504945
+#client.focused_inactive #012934 #012934 #555555 #555555
+#client.unfocused        #012934 #012934 #555555 #555555
+#client.urgent           #ff5555 #ff5555 #ff5555 #ff5555
 
 # Gruvbox
 #client.focused          #222222 #222222 #272727 #272727
