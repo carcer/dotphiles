@@ -20,8 +20,10 @@ rofi-dmenu
 kitty
 #neovim
 #nmap
-jetbrains-toolsbox
+jetbrains-toolbox
 docker
 docker-compose
 dotnet-sdk
 nerd-fonts-fira-code
+slack-desktop
+teams

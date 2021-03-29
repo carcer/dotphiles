@@ -22,6 +22,7 @@ aws
 ack/ackrc
 #aptitude
 bin:bin
+bash/profile
 ctags/ctags
 #cmus
 #curl/curlrc
