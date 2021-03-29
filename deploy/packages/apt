@@ -13,7 +13,6 @@ firefox
 vim
 #tmux
 jq
-nvm
 code
 rofi
 rofi-dmenu
@@ -27,3 +26,4 @@ dotnet-sdk
 nerd-fonts-fira-code
 slack-desktop
 teams
+postman-bin
