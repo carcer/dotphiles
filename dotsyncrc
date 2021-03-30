@@ -38,6 +38,7 @@ git/gitattributes
 gitversion
 #gnupg
 #grc
+htop:.config/htop
 i3
 i3blocks:.config/i3blocks
 i3status/i3status.conf:.config/i3status/config
