@@ -43,13 +43,18 @@ separator=false
 [iface]
 #IFACE=wlan0
 color=#859900
-interval=10
+interval=3600
 separator=false
 
 [wifi]
 INTERFACE=wlp2s0
 label=wifi:
 interval=10
+COLOR_GE80=#859900
+COLOR_GE60=#2aa198
+COLOR_GE40=#b58900
+COLOR_LOWR=#dc322f
+COLOR_DOWN=#dc322f
 
 # CPU usage
 #
@@ -120,14 +125,25 @@ interval=30
 # Date Time
 #
 [time]
-command=date '+%d.%m.%Y  %H:%M'
+command=date '+%d.%m %H:%M'
 interval=60
 
-[batterybar]
+[weather]
+command=curl -Ss 'https://wttr.in?0&T&Q' | cut -c 16- | head -2 | xargs echo
+interval=3600
+color=#A4C2F4
+
+[time]
+instance=uk
+TZ=Europe/London
+command=date '+%d.%m %H:%M'
+interval=60
+
+[battery2]
 label=⚡ 
 interval=5
 markup=pango
-min_width=bat: ■■■■■
+# min_width=bat: ■■■■■
 
 # Generic media player support
 #
