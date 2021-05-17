@@ -11,6 +11,7 @@ if [ ! -f "$id" ]; then
 fi
 
 git clone --recursive git@github.com:carcer/dotphiles.git $dest
+cd $dest
 git checkout envs/i3
 cd $dest
 sh ./deploy/linux
