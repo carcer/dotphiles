@@ -124,14 +124,6 @@ interval=30
 
 # Date Time
 #
-[time]
-command=date '+%d.%m %H:%M'
-interval=60
-
-[weather]
-command=curl -Ss 'https://wttr.in?0&T&Q' | cut -c 16- | head -2 | xargs echo
-interval=3600
-color=#A4C2F4
 
 [time]
 instance=uk
@@ -139,8 +131,17 @@ TZ=Europe/London
 command=date '+%d.%m %H:%M'
 interval=60
 
+[weather]
+command=curl -Ss 'https://wttr.in/utila?format=+%C+%t(%f)+%w\n'
+interval=3600
+color=#A4C2F4
+
+
+[time]
+command=date '+%d.%m %H:%M'
+interval=60
 [battery2]
-label=⚡ 
+command=~/.dotfiles/i3blocks/battery2/battery2
 interval=5
 markup=pango
 # min_width=bat: ■■■■■

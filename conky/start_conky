@@ -1,0 +1,6 @@
+#!/bin/bash
+
+conky -c ~/.dotfiles/conky/solarized.conf &&
+conky -c ~/.dotfiles/conky/shortcuts_solarized.conf &&
+
+exit 0

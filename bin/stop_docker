@@ -1,0 +1,5 @@
+#!/usr/bin/env zsh
+
+notify-send "Stopping docker"
+docker stop $(docker ps -a -q)
+notify-send "Stopped docker"
