@@ -2,13 +2,14 @@
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
 # Path to your oh-my-zsh installation.
-  export ZSH=/home/chris/.oh-my-zsh
+export ZSH=/home/chris/.oh-my-zsh
 
 # Set name of the theme to load. Optionally, if you set this to "random"
 # it'll load a random theme each time that oh-my-zsh is loaded.
 # See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
 #ZSH_THEME="chriscanal"
 ZSH_THEME="spaceship"
+SPACESHIP_DOCKER_SYMBOL=""
 
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
@@ -52,7 +53,7 @@ ZSH_CUSTOM=$HOME/.dotfiles/zsh/custom
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git docker docker-compose git-flow github node npm tmux tmuxinator zsh-syntax-highlighting nvm zsh-completions zsh-autosuggestions extract)
+plugins=(git docker docker-compose git-flow github node npm zsh-syntax-highlighting nvm zsh-completions zsh-autosuggestions extract)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -61,7 +62,9 @@ source $ZSH/oh-my-zsh.sh
 # export MANPATH="/usr/local/man:$MANPATH"
 
 # You may need to manually set your language environment
-# export LANG=en_UK.UTF-8
+# export LC_ALL=en_GB.UTF-8
+# export LC_COLLATE=C
+# export LANG=en_GB.UTF-8
 
 # Preferred editor for local and remote sessions
 if [[ -n $SSH_CONNECTION ]]; then
@@ -84,11 +87,15 @@ fi
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
-function gi() { curl https://www.gitignore.io/api/$@ ;}
 
 SPACESHIP_PROMPT_ADD_NEWLINE=false
 # Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
 export PATH="$PATH:$HOME/.rvm/bin"
-export PATH="$PATH:$HOME/.dotnet/tools"
+# export PATH="$PATH:$HOME/.dotnet/tools"
 export PATH="$PATH:$HOME/.jetbrains"
-export DOTNET_ROOT=/opt/dotnet
+# export DOTNET_ROOT=/opt/dotnet
+
+export PATH=$PATH:/home/chris/.dotfiles/bin
+
+autoload bashcompinit && bashcompinit
+function gi() { curl -sLw n https://www.toptal.com/developers/gitignore/api/$@ ;}
