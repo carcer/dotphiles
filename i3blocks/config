@@ -32,7 +32,7 @@ markup=none
 # Network interface monitoring
 #
 # If the instance is not specified, use the interface used for default route.
-# The address can be forced to IPv4 or IPv6 with -4 or -6 switches.
+# The adress can be forced to IPv4 or IPv6 with -4 or -6 switches.
 
 [bandwidth2]
 interval=persist
@@ -44,7 +44,6 @@ separator=false
 #IFACE=wlan0
 color=#859900
 interval=3600
-separator=false
 
 [wifi]
 INTERFACE=wlp2s0
@@ -55,6 +54,11 @@ COLOR_GE60=#2aa198
 COLOR_GE40=#b58900
 COLOR_LOWR=#dc322f
 COLOR_DOWN=#dc322f
+
+
+[optimus-manager]
+interval=3600
+BLOCK_BUTTON=true
 
 # CPU usage
 #
@@ -74,6 +78,7 @@ separator=false
 [temperature]
 interval=10
 separator=false
+SENSOR_CHIP=coretemp-isa-0000
 
 [load_average]
 label=load  
@@ -99,10 +104,10 @@ interval=10
 separator=false
 interval=30
 
-[memory]
-instance=swap
-interval=30
-separator=false
+#[memory]
+#instance=swap
+#interval=30
+#separator=false
 
 # Disk usage
 #
@@ -140,6 +145,7 @@ color=#A4C2F4
 [time]
 command=date '+%d.%m %H:%M'
 interval=60
+
 [battery2]
 command=~/.dotfiles/i3blocks/battery2/battery2
 interval=5
@@ -167,11 +173,11 @@ markup=pango
 #
 # bindsym --release Caps_Lock exec pkill -SIGRTMIN+11 i3blocks
 # bindsym --release Num_Lock  exec pkill -SIGRTMIN+11 i3blocks
-#[keyindicator]
-#KEY=CAPS
-#markup=pango
-#interval=once
-#signal=11
+# [keyindicator]
+# KEY=CAPS
+# markup=pango
+# interval=once
+# signal=11
 
 #[keyindicator]
 #KEY=NUM

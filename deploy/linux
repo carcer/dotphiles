@@ -34,6 +34,8 @@ DIR=$(cd $(dirname "$0"); pwd)
 # pacman
 ###############################################################################
 
+sudo pacman -Syu;
+
 if [[ -f $DIR/packages/apt ]]; then
   exec<$DIR/packages/apt
   while read line

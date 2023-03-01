@@ -98,4 +98,8 @@ export PATH="$PATH:$HOME/.jetbrains"
 export PATH=$PATH:/home/chris/.dotfiles/bin
 
 autoload bashcompinit && bashcompinit
-function gi() { curl -sLw n https://www.toptal.com/developers/gitignore/api/$@ ;}
+function gi() { curl -sL  https://www.toptal.com/developers/gitignore/api/$@ ;}
+
+#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+export SDKMAN_DIR="$HOME/.sdkman"
+[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"

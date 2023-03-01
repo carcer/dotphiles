@@ -75,7 +75,7 @@ function gcam() {
 function gfea() {
   args=$@
   msg="$(git rev-parse --abbrev-ref HEAD | cut -f2 -d/): ${args}"
-  git commit -m "$msg"
+  git commit -m "$msg" --no-verify
 }
 
 alias gp='git push -u'

@@ -10,7 +10,7 @@
 # Global Config
 [user]
     name = "Chris Canal"
-    email = "dhtmlgod@gmail.com"
+	email = chris@ocd.codes
 
 [branch "master"]
     remote = origin
@@ -153,3 +153,5 @@
 	required = true
 [pull]
 	rebase = true
+[init]
+	defaultBranch = main
