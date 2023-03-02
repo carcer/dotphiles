@@ -37,7 +37,6 @@ docker-compose
 dotnet-sdk
 nerd-fonts-fira-code
 slack-desktop
-teams
 postman-bin
 optimus-manager
 i3blocks
