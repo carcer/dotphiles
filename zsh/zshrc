@@ -98,7 +98,14 @@ export PATH="$PATH:$HOME/.jetbrains"
 export PATH=$PATH:/home/chris/.dotfiles/bin
 
 autoload bashcompinit && bashcompinit
-function gi() { curl -sL  https://www.toptal.com/developers/gitignore/api/$@ ;}
+
+# pnpm
+export PNPM_HOME="/home/chris/.local/share/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end
 
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
 export SDKMAN_DIR="$HOME/.sdkman"

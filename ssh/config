@@ -1,11 +1,13 @@
 #Default GitHub
-Host github.com
-  HostName github.com
-  User git
-  IdentityFile ~/.ssh/master/ldx
-
-#Default GitHub
 Host git.ocd.codes
   HostName github.com
   User git
   IdentityFile ~/.ssh/master/ocd
+
+
+#Default nua-dev01
+Host nua-dev01
+  HostName nua-dev01
+  User git
+  IdentityFile ~/.ssh/master/ocd
+
