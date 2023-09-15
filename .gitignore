@@ -39,3 +39,5 @@ mutt/smime/*
 mutt/certificates
 task/task/*.data
 
+aws/credentials
+gitversion/gitversion

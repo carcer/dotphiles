@@ -1,0 +1,3 @@
+#!/usr/bin/env zsh
+
+docker stop $(docker ps -a -q) && sudo systemctl start docker 

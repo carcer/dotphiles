@@ -10,3 +10,4 @@
 
 # Customize to your needs...
 
+export TERMINAL=kitty

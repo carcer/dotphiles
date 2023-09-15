@@ -75,7 +75,7 @@ function gcam() {
 function gfea() {
   args=$@
   msg="$(git rev-parse --abbrev-ref HEAD | cut -f2 -d/): ${args}"
-  git commit -m "$msg"
+  git commit -m "$msg" --no-verify
 }
 
 alias gp='git push -u'
@@ -159,6 +159,7 @@ fi
 # Lists the ten most used commands.
 alias history-stat="history 0 | awk '{print \$2}' | sort | uniq -c | sort -n -r | head"
 
+function gi() { curl -sL  https://www.toptal.com/developers/gitignore/api/$@ ;}
 
 
 # ==================================================================
@@ -390,5 +391,4 @@ function preview() {
   open $1 -a 'Preview'
 }
 
-alias core3='export DOTNET_ROOT=$HOME/dotnet3 && export PATH=$HOME/dotnet3:$PATH && dotnet --version'
-alias core31='export DOTNET_ROOT=$HOME/dotnet && export PATH=$HOME/dotnet:$PATH && dotnet --version'
+alias pn=pnpm

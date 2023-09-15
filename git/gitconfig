@@ -10,7 +10,7 @@
 # Global Config
 [user]
     name = "Chris Canal"
-    email = "dhtmlgod@gmail.com"
+	email = chris@ocd.codes
 
 [branch "master"]
     remote = origin
@@ -50,6 +50,7 @@
 [core]
     pager = less -FRSX
     whitespace = fix,-indent-with-non-tab,trailing-space,cr-at-eol
+	autocrlf = input
 
 [diff]
     tool = vimdiff
@@ -151,3 +152,7 @@
 	smudge = git-lfs smudge -- %f
 	process = git-lfs filter-process
 	required = true
+[pull]
+	rebase = true
+[init]
+	defaultBranch = main

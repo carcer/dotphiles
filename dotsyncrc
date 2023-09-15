@@ -18,22 +18,34 @@ DOTFILES=.dotfiles
 [files]
 # Uncomment examples below
 dotsyncrc
+aws
 ack/ackrc
 #aptitude
 bin:bin
+bash/profile
 ctags/ctags
 #cmus
 #curl/curlrc
+config/rofi:.config/rofi
+config/picom.conf:.config/picom.conf
+kitty:.config/kitty
+dotnetvm
 git/gitconfig
 git/gitignore
 git/gitattributes
 #git/tigrc
 #git/gitk
+gitversion
 #gnupg
 #grc
+htop:.config/htop
+i3
+i3blocks:.config/i3blocks
+#i3status/i3status.conf:.config/i3status/config
 #input/editrc
 #input/inputrc
 #irssi
+#k6
 #mpd/mpd.conf
 #mercurial/hgrc
 #mercurial/hgignore
@@ -43,9 +55,9 @@ git/gitattributes
 #mysql/my.cnf
 #ncmpcpp/config
 #ncmpcpp/error.log
-neovim/init.vim:.config/nvim/init.vim
-neovim/local_init.vim:.config/nvim/local_init.vim
-neovim/local_bundles.vim:.config/nvim/local_bundles.vim
+#neovim/init.vim:.config/nvim/init.vim
+#neovim/local_init.vim:.config/nvim/local_init.vim
+#neovim/local_bundles.vim:.config/nvim/local_bundles.vim
 #postgresql/psqlrc
 #python/pythonrc
 #python/pylintrc
@@ -60,7 +72,7 @@ neovim/local_bundles.vim:.config/nvim/local_bundles.vim
 #screen/screenrc
 #shell/hushlogin
 #shell/urlview
-#ssh
+ssh
 #subversion
 #task/task
 #task/taskrc
@@ -78,14 +90,17 @@ zsh/zlogout
 zsh/zprofile
 zsh/zshenv
 zsh/zshrc
+Xresources/xinitrc
+Xresources/Xresources
 [endfiles]
 
 # Hosts to sync
 ## hostname                     type=masterhost, ANY or NONE    files=dotfile:tolink,another:tolink
 [hosts]
-chris-XPS-13-9360		git=ANY
-xps 		git=ANY
-xps-2019 		git=ANY
+xps-2019                         git=envs/xps-2019
+xps-i3                           git=envs/i3
+chris-xps159500                  git=envs/i3
+chris-virtualbox                 git=ANY
 #host1.example.com               git=ANY                        files=custom/dotfile    #git repo, pull from anywhere and link a custom dotfile
 #host2.example.com               git=ANY                                                #git repo, pull from anywhere
 #host3.example.com               git=ANY                                                #git repo, pull from anywhere
