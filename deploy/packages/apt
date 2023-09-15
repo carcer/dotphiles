@@ -7,13 +7,13 @@
 #    Ben O'Hara <bohara@gmail.com>
 #
 
+aspnet-runtime
 firefox
 #zsh
 #git
 vim
 #tmux
 jq
-visual-studio-code-bin
 steam-manjaro
 steam-native
 playerctl
@@ -25,6 +25,8 @@ proton-ge-custom-bin
 steam-native
 mesa-utils
 xorg-server-xephyr
+visual-studio-code-insiders-bin
+visual-studio-code-bin
 vlc
 rofi
 rofi-dmenu
@@ -43,3 +45,4 @@ i3blocks
 qbittorrent
 libmicrodns
 protobuf
+optimus-manager-qt
