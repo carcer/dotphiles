@@ -36,3 +36,7 @@
 #xz
 #zsh
 
+--cask firefox
+--cask kitty
+--cask visual-studio-code
+--cask jetbrains-toolbox
