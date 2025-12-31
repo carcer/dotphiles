@@ -1,13 +1,25 @@
+Include /Users/chris/.colima/ssh_config
+
 #Default GitHub
 Host git.ocd.codes
   HostName github.com
   User git
   IdentityFile ~/.ssh/master/ocd
 
-
-#Default nua-dev01
-Host nua-dev01
-  HostName nua-dev01
-  User git
+Host irregular-apocalypse
+  ServerAliveInterval 60
+  ServerAliveCountMax 5
+  HostName 65.109.122.248   # Replace with your VPS IP
+  User chris              # Replace with your VPS user
+  IdentityFile ~/.ssh/master/ocd   # Replace with the correct SSH key file
+  
+Host youthful-indiscretion
+  ServerAliveInterval 60
+  ServerAliveCountMax 5
+  HostName 65.108.8.55
+  User chris              
   IdentityFile ~/.ssh/master/ocd
+  LocalForward 8000 localhost:8000
+  LocalForward 6001 localhost:6001
+
 

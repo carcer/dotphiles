@@ -40,3 +40,15 @@
 --cask kitty
 --cask visual-studio-code
 --cask jetbrains-toolbox
+--cask font-fira-code-nerd-font
+--cask google-chrome
+--cask dotnet-sdk
+--cask vlc
+--cask docker
+-cask docker-compose
+watchman
+--cask spotify
+--cask postman
+pnpm
+xcodesorg/made/xcodes
+--cask microsoft-teams

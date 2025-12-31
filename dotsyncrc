@@ -92,6 +92,7 @@ zsh/zshenv
 zsh/zshrc
 Xresources/xinitrc
 Xresources/Xresources
+jetbrains
 [endfiles]
 
 # Hosts to sync
