@@ -98,18 +98,6 @@ export PATH=$PATH:$HOME/.docker/bin
 
 autoload bashcompinit && bashcompinit
 
-# bun completions
-[ -s "/Users/chris/.bun/_bun" ] && source "/Users/chris/.bun/_bun"
-
-# bun
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
-
-# Jet Brains
-export PATH="$PATH:$HOME/.jetbrains"
-
-export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
-
 # The following lines have been added by Docker Desktop to enable Docker CLI completions.
 fpath=(/Users/chris/.docker/completions $fpath)
 autoload -Uz compinit

@@ -41,3 +41,4 @@ task/task/*.data
 
 aws/credentials
 gitversion/gitversion
+jetbrains
