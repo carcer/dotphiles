@@ -14,15 +14,13 @@ firefox
 vim
 #tmux
 jq
-steam-manjaro
-steam-native
+steam
 playerctl
 bluez
 bluez-utils
 fwupd
 blueman
 proton-ge-custom-bin
-steam-native
 mesa-utils
 xorg-server-xephyr
 visual-studio-code-insiders-bin
@@ -35,6 +33,7 @@ kitty
 #nmap
 jetbrains-toolbox
 docker
+docker-rootless-extras
 docker-compose
 dotnet-sdk
 nerd-fonts-fira-code
@@ -44,3 +43,5 @@ i3blocks
 qbittorrent
 libmicrodns
 protobuf
+framework-system
+keepassxc

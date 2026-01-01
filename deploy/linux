@@ -34,17 +34,45 @@ DIR=$(cd $(dirname "$0"); pwd)
 # pacman
 ###############################################################################
 
-sudo pacman -Syu;
+# sudo pacman -Syu;
 
-if [[ -f $DIR/packages/apt ]]; then
-  exec<$DIR/packages/apt
-  while read line
-  do  
-    if [[ ! "$line" =~ (^#|^$) ]]; then
-      packages="$packages $line"
-    fi
-  done
-  sudo pamac install --no-confirm $packages
+# if [[ -f $DIR/packages/apt ]]; then
+#   exec<$DIR/packages/apt
+#   while read line
+#   do  
+#     if [[ ! "$line" =~ (^#|^$) ]]; then
+#       packages="$packages $line"
+#     fi
+#   done
+#   sudo pamac install --no-confirm $packages
+# fi
+
+
+###############################################################################
+# yay
+###############################################################################
+
+# Update core repositories (non-interactive)
+sudo pacman -Syu --noconfirm
+
+# Install yay (AUR helper) if not already installed
+if ! command -v yay >/dev/null 2>&1; then
+  sudo pacman -S --needed --noconfirm base-devel git
+  tmpdir=$(mktemp -d)
+  git clone https://aur.archlinux.org/yay.git "$tmpdir/yay"
+  (cd "$tmpdir/yay" && makepkg -si --noconfirm)
+  rm -rf "$tmpdir"
+fi
+
+if [[ -f "$DIR/packages/apt" ]]; then
+  packages=""
+  while IFS= read -r line; do
+    [[ "$line" =~ (^#|^$) ]] && continue
+    packages+=" $line"
+  done < "$DIR/packages/apt"
+  if [[ -n "$packages" ]]; then
+    yay -S --noconfirm --needed $packages
+  fi
 fi
 
 sh $DIR/oh-my-zsh.sh
