@@ -27,7 +27,7 @@
 	url = https://github.com/zsh-users/zsh-completions
 [submodule "zsh/custom/plugins/zsh-autosuggestions"]
 	path = zsh/custom/plugins/zsh-autosuggestions
-	url = git://github.com/zsh-users/zsh-autosuggestions
+	url = https://github.com/zsh-users/zsh-autosuggestions
 [submodule "zsh/custom/themes/spaceship-prompt"]
 	path = zsh/custom/themes/spaceship-prompt
 	url = https://github.com/denysdovhan/spaceship-prompt.git
