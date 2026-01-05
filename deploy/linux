@@ -58,10 +58,7 @@ sudo pacman -Syu --noconfirm
 # Install yay (AUR helper) if not already installed
 if ! command -v yay >/dev/null 2>&1; then
   sudo pacman -S --needed --noconfirm base-devel git
-  tmpdir=$(mktemp -d)
-  git clone https://aur.archlinux.org/yay.git "$tmpdir/yay"
-  (cd "$tmpdir/yay" && makepkg -si --noconfirm)
-  rm -rf "$tmpdir"
+  pamac install yay
 fi
 
 if [[ -f "$DIR/packages/apt" ]]; then
