@@ -98,8 +98,4 @@ export PATH=$PATH:$HOME/.docker/bin
 
 autoload bashcompinit && bashcompinit
 
-# The following lines have been added by Docker Desktop to enable Docker CLI completions.
-fpath=(/Users/chris/.docker/completions $fpath)
-autoload -Uz compinit
-compinit
-# End of Docker CLI completions
+eval $(keychain --eval --quiet ~/.ssh/id_*)

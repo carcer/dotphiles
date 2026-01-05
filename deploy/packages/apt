@@ -45,3 +45,5 @@ libmicrodns
 protobuf
 framework-system
 keepassxc
+timeshift
+keyring

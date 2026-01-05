@@ -12,6 +12,6 @@ fi
 
 git clone --recursive git@github.com:carcer/dotphiles.git $dest
 cd $dest
-git checkout envs/i9
+git checkout envs/framework
 
 sh ./quick.sh
