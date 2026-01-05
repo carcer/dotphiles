@@ -98,6 +98,7 @@ jetbrains
 # Hosts to sync
 ## hostname                     type=masterhost, ANY or NONE    files=dotfile:tolink,another:tolink
 [hosts]
+chris-framework                  git=envs/framework
 Chriss-MacBook-Air.local         git=envs/mac
 xps-2019                         git=envs/xps-2019
 xps-i3                           git=envs/i3
