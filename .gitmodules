@@ -7,9 +7,6 @@
 #   Ben O'Hara <bohara@gmail.com>
 #
 
-[submodule "dotsync"]
-	path = dotsync
-	url = https://github.com/dotphiles/dotsync.git
 [submodule "zsh/dotzsh"]
 	path = zsh/dotzsh
 	url = https://github.com/dotphiles/dotzsh.git
