@@ -101,9 +101,6 @@ autoload bashcompinit && bashcompinit
 export DOTNET_ROOT="$HOME/.dotnet"
 export PATH="$HOME/.dotnet:$PATH"
 
-# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
-export PATH="$PATH:$HOME/.rvm/bin"
-
 # Ensure SSH key permissions are correct before loading keychain
 if [ -d "$HOME/.ssh/master" ]; then
   chmod 700 "$HOME/.ssh" "$HOME/.ssh/master" 2>/dev/null
@@ -120,3 +117,8 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 # pnpm end
+export PATH="$HOME/.local/bin:$PATH"
+
+
+# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
+export PATH="$PATH:$HOME/.rvm/bin"
