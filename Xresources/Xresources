@@ -1,4 +1,4 @@
-Xft.dpi:       192
+Xft.dpi:       168
 Xft.antialias: true
 Xft.hinting:   true
 Xft.rgba:      rgb
@@ -9,8 +9,8 @@ Xft.lcdfilter: lcddefault
 XTerm*background:        #222D31
 XTerm*foreground:        #d8d8d8
 XTerm*pointerColor:      #1ABB9B
-XTerm*faceName:          Fixed
-XTerm*faceSize:          11
+XTerm*faceName:          Fira Code
+XTerm*faceSize:          13
 XTerm*reverseVideo:      on
 XTerm*selectToClipboard: true
 
@@ -57,11 +57,10 @@ XTerm*selectToClipboard: true
 Xcursor.theme: xcursor-breeze
 Xcursor.size:                     0
 
-URxvt.font:                       9x15,xft:TerminessTTFNerdFontMono
+URxvt.font:                       xft:Fira Code:pixelsize=14
 
-! alternative font settings with 'terminus':
-! URxvt.font:      -xos4-terminus-medium-r-normal--16-160-72-72-c-80-iso10646-1
-! URxvt.bold.font: -xos4-terminus-bold-r-normal--16-160-72-72-c-80-iso10646-1
+! alternative font settings with 'Fira Code':
+! URxvt.bold.font: xft:Fira Code:bold:pixelsize=14
 !! terminus names see end of file!
 
 URxvt.depth:                      32

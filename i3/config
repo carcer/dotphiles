@@ -236,8 +236,8 @@ for_window [class="Skype"] floating enable border normal
 for_window [class="Timeset-gui"] floating enable border normal
 for_window [class="(?i)virtualbox"] floating enable border normal
 for_window [class="Xfburn"] floating enable
-for_window [class="Jetbains Toolbox"] floating enable
-for_window [class="Postman*"] floating enable normal
+for_window [class="JetBrains Toolbox"] floating enable
+for_window [class="Postman*"] floating enable border normal
 for_window [class="f1"] floating enable
 
 # switch to workspace with urgent window automatically
@@ -250,7 +250,7 @@ bindsym $mod+Shift+c reload
 bindsym $mod+Shift+r restart
 
 # exit i3 (logs you out of your X session)
-bindsym $mod+Shift+e eExec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -b 'Yes, exit i3' 'i3-msg exit'"
+bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -b 'Yes, exit i3' 'i3-msg exit'"
 
 # Switch GPU
 bindsym $mod+o mode "$gpu"
@@ -288,7 +288,7 @@ mode "resize" {
         # These bindings trigger as soon as you enter the resize mode
         # Pressing left will shrink the window’s width.
         # Pressing right will grow the window’s width.
-        # Pressing uis postman p will shrink the window’s height.
+        # Pressing up will shrink the window's height.
         # Pressing down will grow the window’s height.
         bindsym j resize shrink width 5 px or 5 ppt
         bindsym k resize grow height 5 px or 5 ppt
@@ -395,28 +395,7 @@ client.focused_inactive #839496 #44475A #F8F8F2 #44475A   #44475A
 client.unfocused        #282A36 #282A36 #BFBFBF #282A36   #073642
 client.urgent           #282A36 #859900 #FFFFFF #859900   #859900 
 client.placeholder      #282A36 #282A36 #F8F8F2 #282A36   #282A36
-client.background       #002b36 
-
-# Theme colors
-# class                   border  backgr. text    indic.   child_border
- # client.focused          #556064 #556064 #80FFF9 #FDF6E3
- # client.focused_inactive #2F3D44 #2F3D44 #1ABC9C #454948
- # client.unfocused        #2F3D44 #2F3D44 #1ABC9C #454948
- # client.urgent           #CB4B16 #FDF6E3 #1ABC9C #268BD2
- # client.placeholder      #000000 #0c0c0c #ffffff #000000 
-
-#client.background       #2B2C2B
-
-#client.focused          #0a0f14 #0a0f14 #504945 #504945
-#client.focused_inactive #050a0f #050a0f #555555 #555555
-#client.unfocused        #050a0f #050a0f #555555 #555555
-#client.urgent           #ff5555 #ff5555 #ff5555 #ff5555
-
-# Gruvbox
-#client.focused          #222222 #222222 #272727 #272727
-#client.focused_inactive #111111 #111111 #222222 #222222
-#client.unfocused        #111111 #111111 #222222 #222222
-#client.urgent           #ff5555 #ff5555 #ff5555 #ff5555
+client.background       #002b36
 
 
 #############################
