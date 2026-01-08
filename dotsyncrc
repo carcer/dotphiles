@@ -59,6 +59,7 @@ i3blocks:.config/i3blocks
 #neovim/local_init.vim:.config/nvim/local_init.vim
 #neovim/local_bundles.vim:.config/nvim/local_bundles.vim
 #postgresql/psqlrc
+powershell:.config/powershell
 #python/pythonrc
 #python/pylintrc
 #rpm/rpmmacros
