@@ -2,7 +2,7 @@
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
 # Path to your oh-my-zsh installation.
-export ZSH=/Users/chris/.oh-my-zsh
+export ZSH=/home/chris/.oh-my-zsh
 
 # Set name of the theme to load. Optionally, if you set this to "random"
 # it'll load a random theme each time that oh-my-zsh is loaded.
@@ -10,6 +10,7 @@ export ZSH=/Users/chris/.oh-my-zsh
 #ZSH_THEME="chriscanal"
 ZSH_THEME="spaceship"
 SPACESHIP_DOCKER_SYMBOL=""
+SPACESHIP_BATTERY_SHOW=false 
 
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
@@ -90,12 +91,32 @@ fi
 
 SPACESHIP_PROMPT_ADD_NEWLINE=false
 
-# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
-export PATH="$PATH:$HOME/.rvm/bin"
-
 export PATH=$PATH:/home/chris/.dotfiles/bin
 export PATH=$PATH:$HOME/.docker/bin
 
+export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock
+
 autoload bashcompinit && bashcompinit
 
-eval $(keychain --eval --quiet ~/.ssh/id_*)
+export DOTNET_ROOT="$HOME/.dotnet"
+export PATH="$HOME/.dotnet:$PATH"
+
+# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
+export PATH="$PATH:$HOME/.rvm/bin"
+
+# Ensure SSH key permissions are correct before loading keychain
+if [ -d "$HOME/.ssh/master" ]; then
+  chmod 700 "$HOME/.ssh" "$HOME/.ssh/master" 2>/dev/null
+  find "$HOME/.ssh/master" -type f -name '*.pub' -exec chmod 644 {} \;
+  find "$HOME/.ssh/master" -type f ! -name '*.pub' -exec chmod 600 {} \;
+fi
+
+eval $(keychain --eval --quiet ~/.ssh/master/id_*)
+
+# pnpm
+export PNPM_HOME="/home/chris/.local/share/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end

@@ -12,4 +12,3 @@
 
 export TERMINAL=kitty
 
-eval "$(/opt/homebrew/bin/brew shellenv)"

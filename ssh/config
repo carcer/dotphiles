@@ -2,21 +2,14 @@
 Host git.ocd.codes
   HostName github.com
   User git
-  IdentityFile ~/.ssh/master/ocd
+  IdentityFile ~/.ssh/master/id_ocd
 
-Host irregular-apocalypse
-  ServerAliveInterval 60
-  ServerAliveCountMax 5
-  HostName 65.109.122.248   # Replace with your VPS IP
-  User chris              # Replace with your VPS user
-  IdentityFile ~/.ssh/master/ocd   # Replace with the correct SSH key file
-  
 Host youthful-indiscretion
   ServerAliveInterval 60
   ServerAliveCountMax 5
   HostName 65.108.8.55
   User chris              
-  IdentityFile ~/.ssh/master/ocd
+  IdentityFile ~/.ssh/master/id_ocd
   LocalForward 8000 localhost:8000
   LocalForward 6001 localhost:6001
 
