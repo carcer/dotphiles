@@ -1,0 +1,12 @@
+[Unit]
+Description=Idle Suspend Service
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/home/chris/.dotfiles/bin/idle-suspend.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=graphical-session.target

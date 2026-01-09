@@ -42,6 +42,10 @@ htop:.config/htop
 i3
 i3blocks:.config/i3blocks
 #i3status/i3status.conf:.config/i3status/config
+systemd/logind.conf.d:.config/systemd/logind.conf.d
+systemd/sleep.conf.d:.config/systemd/sleep.conf.d
+systemd/system-sleep:.config/systemd/system-sleep
+systemd/user/idle-suspend.service:.config/systemd/user/idle-suspend.service
 #input/editrc
 #input/inputrc
 #irssi
