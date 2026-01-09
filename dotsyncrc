@@ -29,6 +29,7 @@ ctags/ctags
 config/rofi:.config/rofi
 config/picom.conf:.config/picom.conf
 kitty:.config/kitty
+pam.d
 dotnetvm
 git/gitconfig
 git/gitignore

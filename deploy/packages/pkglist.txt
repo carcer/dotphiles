@@ -29,6 +29,7 @@ epdfview
 exfat-utils
 expressvpn
 firefox
+fprintd
 gcolor2
 gitkraken
 glibc-locales
@@ -47,6 +48,7 @@ jetbrains-toolbox
 kdenlive
 lib32-flex
 lib32-mesa-demos
+libfprint
 lightdm-slick-greeter
 linux63-nvidia
 linux64-nvidia
@@ -129,7 +131,6 @@ xautolock
 xf86-input-elographics
 xf86-input-evdev
 xf86-input-void
-xfce4-power-manager
 xorg-xinit
 xorg-xkill
 yt-dlp

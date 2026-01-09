@@ -1,0 +1,12 @@
+#%PAM-1.0
+# PAM configuration for PolicyKit/polkit GUI authorization
+# Enables fingerprint authentication for privilege escalation dialogs
+
+# Fingerprint authentication - sufficient means if it succeeds, skip password
+auth       sufficient   pam_fprintd.so       max_tries=1 timeout=10
+
+# Fallback to standard unix authentication (password)
+auth       required     pam_unix.so          try_first_pass
+account    required     pam_unix.so
+password   required     pam_unix.so
+session    required     pam_unix.so

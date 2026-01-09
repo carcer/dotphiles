@@ -1,0 +1,13 @@
+#%PAM-1.0
+# PAM configuration file for the i3lock screen locker
+# Enables fingerprint authentication with password fallback
+
+# Fingerprint authentication first
+auth       sufficient   pam_fprintd.so       max_tries=1 timeout=10
+
+# Fallback to password authentication
+auth       sufficient   pam_unix.so          try_first_pass likeauth nullok
+
+# Required modules
+auth       required     pam_env.so
+account    required     pam_unix.so
