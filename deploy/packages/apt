@@ -13,16 +13,13 @@ firefox
 vim
 #tmux
 jq
-steam
 playerctl
 bluez
 bluez-utils
 fwupd
 blueman
-proton-ge-custom-bin
 mesa-utils
 xorg-server-xephyr
-visual-studio-code-insiders-bin
 visual-studio-code-bin
 vlc
 rofi

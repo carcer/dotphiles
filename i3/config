@@ -10,6 +10,7 @@ set $mod Mod4
 # Configure border style <normal|1pixel|pixel xx|none|pixel>
 default_border pixel 1
 default_floating_border normal
+floating_maximum_size 1800 x 1200
 
 # Hide borders
 hide_edge_borders none
@@ -82,8 +83,46 @@ bindsym $mod+Ctrl+Shift+d --release exec "killall dunst; exec notify-send 'resta
 bindsym Print exec --no-startup-id i3-scrot
 bindsym $mod+Print --release exec --no-startup-id i3-scrot -w
 bindsym $mod+Shift+Print --release exec --no-startup-id i3-scrot -s
+
+# Screenshot mode
+set $mode_screenshot Screenshot: (f)ull (w)indow (s)elect | +Shift=clipboard
+bindsym $mod+p mode "$mode_screenshot"
+
+mode "$mode_screenshot" {
+    # Save to file
+    bindsym f exec --no-startup-id i3-scrot, mode "default"
+    bindsym w exec --no-startup-id i3-scrot -w, mode "default"
+    bindsym s exec --no-startup-id i3-scrot -s, mode "default"
+
+    # Copy to clipboard (Shift modifier)
+    bindsym Shift+f exec --no-startup-id i3-scrot -dc, mode "default"
+    bindsym Shift+w exec --no-startup-id i3-scrot -wc, mode "default"
+    bindsym Shift+s exec --no-startup-id i3-scrot -sc, mode "default"
+
+    # Exit mode
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
 bindsym $mod+Shift+h exec xdg-open /usr/share/doc/manjaro/i3_help.pdf
 bindsym $mod+Ctrl+x --release exec --no-startup-id xkill
+
+# Workspace launcher mode
+set $mode_launch Launch: (1)Firefox (2)Dev (3)Rider (4)Comms (5)Postman (8)Spotify (a)All
+bindsym $mod+Ctrl+s mode "$mode_launch"
+
+mode "$mode_launch" {
+    bindsym 1 workspace $ws1; exec firefox; mode "default"
+    bindsym 2 workspace $ws2; exec code; exec kitty; mode "default"
+    bindsym 3 workspace $ws3; exec rider; mode "default"
+    bindsym 4 workspace $ws4; exec slack; exec discord; mode "default"
+    bindsym 5 workspace $ws5; exec postman; mode "default"
+    bindsym 8 workspace $ws8; exec spotify; mode "default"
+    bindsym a exec --no-startup-id ~/.dotfiles/i3/launch-workspaces.sh; mode "default"
+
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
 
 # focus_follows_mouse no
 
@@ -252,18 +291,6 @@ bindsym $mod+Shift+r restart
 
 # exit i3 (logs you out of your X session)
 bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -b 'Yes, exit i3' 'i3-msg exit'"
-
-# Switch GPU
-bindsym $mod+o mode "$gpu"
-set $gpu (n)vidia, (i)ntegrated
-mode "$gpu" {
-    bindsym n exec --no-startup-id optimus-manager --switch nvidia --no-confirm
-    bindsym i exec --no-startup-id optimus-manager --switch integrated --no-confirm
-
-    # exit system mode: "Enter" or "Escape"
-    bindsym Return mode "default"
-    bindsym Escape mode "default"
-}
 
 # Set shut down, restart and locking features
 bindsym $mod+0 mode "$mode_system"
