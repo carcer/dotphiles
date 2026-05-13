@@ -75,5 +75,7 @@ Zsh and vim plugins are git submodules (defined in `.gitmodules`):
 **Systemd** (`systemd/`):
 - `logind.conf.d/` — lid switch and power button behavior
 - `sleep.conf.d/` — suspend mode (s2idle)
-- `system-sleep/10-wifi-suspend.sh` — MT7925E WiFi module unload/reload workaround for suspend
+- `system-sleep/10-wifi-suspend.sh` — MT7925 WiFi+BT module unload/reload workaround for suspend
+- `system/mt7925-bt-init.service` — boot-time MT7925 BT reset, fixes cold-boot `wmt command timed out` / `Failed to set up firmware (-110)`. Cold boot only — `reboot` doesn't drop chip power, so a wedged BT chip survives reboots and needs `systemctl poweroff` to recover
 - `user/idle-suspend.service` — auto-suspend after 20min idle on battery
+- `install-system-configs.sh` — `sudo` helper that copies the two files above into `/etc/systemd/...` and enables `mt7925-bt-init.service`. Re-run after editing either file
