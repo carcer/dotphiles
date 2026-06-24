@@ -121,3 +121,13 @@ autoload -Uz compinit
 compinit
 # End of Docker CLI completions
 export PATH="$HOME/.local/bin:$PATH"
+
+# --- Keep trackpad/wheel scrolling kitty's own scrollback ---------------------
+# A program suspended with Ctrl+Z (SIGTSTP) can't emit its "disable mouse
+# tracking" escape sequence, so it leaves the terminal stuck in mouse-tracking
+# mode. While that's active, kitty forwards scroll events to the shell instead
+# of scrolling its scrollback (which zsh turns into history navigation). Reset
+# the mouse-tracking modes at every prompt; a resumed program re-enables its own.
+autoload -Uz add-zsh-hook
+__reset_mouse_tracking() { print -n '\e[?1000l\e[?1002l\e[?1003l\e[?1006l\e[?1015l' }
+add-zsh-hook precmd __reset_mouse_tracking
