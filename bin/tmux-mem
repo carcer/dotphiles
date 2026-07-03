@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
 # Print memory usage for the tmux status line (macOS).
-# Reports "used/total G" where used = active + wired + compressed pages
-# (roughly Activity Monitor's "Memory Used").
+# Reports "used/total G" where "used" matches Activity Monitor's
+# "Memory Used" = App Memory + Wired + Compressed, with
+#   App Memory = Anonymous pages - Purgeable pages
+# (NOT "active" pages — that omits inactive-but-resident app memory).
 
 total_bytes=$(sysctl -n hw.memsize)
 
-# Page size and used pages straight from vm_stat (no hardcoded page size).
 read -r page_size used_pages < <(vm_stat | awk '
-  /page size of/       { for (i=1;i<=NF;i++) if ($i ~ /^[0-9]+$/) ps=$i }
-  /Pages active/                 { gsub(/\./,"",$3); a=$3 }
-  /Pages wired down/             { gsub(/\./,"",$4); w=$4 }
-  /Pages occupied by compressor/ { gsub(/\./,"",$5); c=$5 }
-  END { print ps, a+w+c }
+  /page size of/                 { for (i=1;i<=NF;i++) if ($i ~ /^[0-9]+$/) ps=$i }
+  /Pages wired down/             { gsub(/\./,"",$4); wired=$4 }
+  /Pages purgeable/              { gsub(/\./,"",$3); purge=$3 }
+  /Anonymous pages/              { gsub(/\./,"",$3); anon=$3 }
+  /Pages occupied by compressor/ { gsub(/\./,"",$5); comp=$5 }
+  END { print ps, (anon - purge) + wired + comp }
 ')
 
 used_bytes=$(( used_pages * page_size ))
