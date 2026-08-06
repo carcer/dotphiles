@@ -13,66 +13,50 @@ if [[ "$OSTYPE" != "linux"* ]]; then
   exit 1
 fi
 
-DIR=$(cd $(dirname "$0"); pwd)
+set -euo pipefail
 
-###############################################################################
-# apt-get
-###############################################################################
+DIR=$(cd "$(dirname "$0")" && pwd)
 
-# if [[ -f $DIR/packages/apt ]]; then
-#   exec<$DIR/packages/apt
-#   while read line
-#   do
-#     if [[ ! "$line" =~ (^#|^$) ]]; then
-#       packages="$packages $line"
-#     fi
-#   done
-#   sudo apt-get -y install $packages
-# fi
+read_manifest() {
+  local manifest=$1
+  sed -e 's/[[:space:]]*#.*$//' -e '/^[[:space:]]*$/d' "$manifest"
+}
 
-###############################################################################
-# pacman
-###############################################################################
+install_manifest() {
+  local manifest=$1
+  shift
+  local installer=("$@")
+  local packages=()
 
-# sudo pacman -Syu;
+  [[ -f "$manifest" ]] || return 0
+  mapfile -t packages < <(read_manifest "$manifest")
+  ((${#packages[@]})) || return 0
+  "${installer[@]}" -S --needed --noconfirm "${packages[@]}"
+}
 
-# if [[ -f $DIR/packages/apt ]]; then
-#   exec<$DIR/packages/apt
-#   while read line
-#   do  
-#     if [[ ! "$line" =~ (^#|^$) ]]; then
-#       packages="$packages $line"
-#     fi
-#   done
-#   sudo pamac install --no-confirm $packages
-# fi
+source /etc/os-release
+if [[ "${ID:-}" != cachyos && "${ID:-}" != arch && "${ID:-}" != manjaro ]]; then
+  echo "Unsupported Linux distribution: ${ID:-unknown}" >&2
+  exit 1
+fi
 
-
-###############################################################################
-# yay
-###############################################################################
-
-# Update core repositories (non-interactive)
 sudo pacman -Syu --noconfirm
+install_manifest "$DIR/packages/arch-repo" sudo pacman
 
-# Install yay (AUR helper) if not already installed
-if ! command -v yay >/dev/null 2>&1; then
-  sudo pacman -S --needed --noconfirm base-devel git
-  pamac install yay
-fi
-
-if [[ -f "$DIR/packages/apt" ]]; then
-  packages=""
-  while IFS= read -r line; do
-    [[ "$line" =~ (^#|^$) ]] && continue
-    packages+=" $line"
-  done < "$DIR/packages/apt"
-  if [[ -n "$packages" ]]; then
-    yay -S --noconfirm --needed $packages
+if [[ -s "$DIR/packages/arch-aur" ]]; then
+  if ! command -v yay >/dev/null 2>&1; then
+    sudo pacman -S --needed --noconfirm base-devel git
+    build_dir=$(mktemp -d "${TMPDIR:-/tmp}/dotphiles-yay.XXXXXX")
+    trap 'rm -rf -- "$build_dir"' EXIT
+    git clone https://aur.archlinux.org/yay-bin.git "$build_dir/yay-bin"
+    (cd "$build_dir/yay-bin" && makepkg -si --needed --noconfirm)
   fi
+  install_manifest "$DIR/packages/arch-aur" yay
 fi
 
-sh $DIR/oh-my-zsh.sh
+"$DIR/install-npm-globals.sh"
+"$DIR/install-herdr.sh"
+"$DIR/oh-my-zsh.sh"
 
 # sudo update-alternatives --install /usr/bin/vi vi /usr/bin/nvim 60
 # sudo update-alternatives --config vi

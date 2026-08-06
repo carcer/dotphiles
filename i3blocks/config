@@ -55,7 +55,8 @@ color=#859900
 interval=3600
 
 [wifi]
-INTERFACE=wlp192s0
+# Let the blocklet discover the active wireless interface; persistent names can
+# change across a clean install.
 label=wifi:
 interval=10
 COLOR_GE80=#859900

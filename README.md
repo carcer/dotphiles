@@ -104,10 +104,12 @@ commiting that you dont include any personal info you dont want in public!
 ### deploy
 
 - `deploy/osx` setup osx and install ports & brews (only use one)
-- `deploy/linux` setup linux and install packages
+- `deploy/linux` bootstrap CachyOS/Arch and install repository, AUR, npm, and Herdr packages
   - `packages/macports` add ports to be installed by `osx` (select one)
   - `packages/homebrew` add brews to be installed by `osx` (select one)
-  - `packages/apt` add packages to be installed by `linux` on apt based systems
+  - `packages/arch-repo` packages from configured Pacman repositories
+  - `packages/arch-aur` reviewed AUR packages installed through yay
+  - `packages/npm` unpinned global npm developer tools
 
 ### dotsync
 

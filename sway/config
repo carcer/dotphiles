@@ -1,0 +1,214 @@
+# Sway configuration for the Framework laptop.
+# i3 remains available as an X11 fallback in ~/.dotfiles/i3/config.
+
+set $mod Mod4
+set $term kitty
+set $menu fuzzel
+
+font pango:FiraCode Nerd Font Mono 11
+default_border pixel 1
+default_floating_border pixel 1
+floating_modifier $mod normal
+focus_follows_mouse no
+workspace_auto_back_and_forth yes
+gaps inner 10
+gaps outer 0
+smart_gaps on
+
+# Framework touchpad defaults. Device-specific overrides can be added after
+# validating `swaymsg -t get_inputs` on the installed system.
+input type:touchpad {
+    tap enabled
+    natural_scroll enabled
+    dwt enabled
+}
+
+# Preserve the current i3 directional muscle memory.
+bindsym $mod+j focus left
+bindsym $mod+k focus down
+bindsym $mod+l focus up
+bindsym $mod+semicolon focus right
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+
+bindsym $mod+Shift+j move left
+bindsym $mod+Shift+k move down
+bindsym $mod+Shift+l move up
+bindsym $mod+Shift+semicolon move right
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+Down move down
+bindsym $mod+Shift+Up move up
+bindsym $mod+Shift+Right move right
+
+bindsym $mod+Return exec $term
+bindsym $mod+Shift+q kill
+bindsym $mod+d exec $menu
+bindsym $mod+Shift+d exec $menu
+bindsym $mod+Tab exec $menu
+bindsym $mod+Shift+Tab workspace back_and_forth
+
+bindsym $mod+h splith
+bindsym $mod+v splitv
+bindsym $mod+q split toggle
+bindsym $mod+f fullscreen toggle
+bindsym $mod+s layout stacking
+bindsym $mod+w layout tabbed
+bindsym $mod+e layout toggle split
+bindsym $mod+Shift+space floating toggle
+bindsym $mod+space focus mode_toggle
+bindsym $mod+Shift+s sticky toggle
+bindsym $mod+a focus parent
+bindsym $mod+Shift+minus move scratchpad
+bindsym $mod+minus scratchpad show
+bindsym $mod+b workspace back_and_forth
+bindsym $mod+Shift+b move container to workspace back_and_forth; workspace back_and_forth
+bindsym $mod+Ctrl+Right workspace next
+bindsym $mod+Ctrl+Left workspace prev
+
+set $ws1 1
+set $ws2 2
+set $ws3 3
+set $ws4 4
+set $ws5 5
+set $ws6 6
+set $ws7 7
+set $ws8 8
+
+bindsym $mod+1 workspace $ws1
+bindsym $mod+2 workspace $ws2
+bindsym $mod+3 workspace $ws3
+bindsym $mod+4 workspace $ws4
+bindsym $mod+5 workspace $ws5
+bindsym $mod+6 workspace $ws6
+bindsym $mod+7 workspace $ws7
+bindsym $mod+8 workspace $ws8
+
+bindsym $mod+Ctrl+1 move container to workspace $ws1
+bindsym $mod+Ctrl+2 move container to workspace $ws2
+bindsym $mod+Ctrl+3 move container to workspace $ws3
+bindsym $mod+Ctrl+4 move container to workspace $ws4
+bindsym $mod+Ctrl+5 move container to workspace $ws5
+bindsym $mod+Ctrl+6 move container to workspace $ws6
+bindsym $mod+Ctrl+7 move container to workspace $ws7
+bindsym $mod+Ctrl+8 move container to workspace $ws8
+
+bindsym $mod+Shift+1 move container to workspace $ws1; workspace $ws1
+bindsym $mod+Shift+2 move container to workspace $ws2; workspace $ws2
+bindsym $mod+Shift+3 move container to workspace $ws3; workspace $ws3
+bindsym $mod+Shift+4 move container to workspace $ws4; workspace $ws4
+bindsym $mod+Shift+5 move container to workspace $ws5; workspace $ws5
+bindsym $mod+Shift+6 move container to workspace $ws6; workspace $ws6
+bindsym $mod+Shift+7 move container to workspace $ws7; workspace $ws7
+bindsym $mod+Shift+8 move container to workspace $ws8; workspace $ws8
+
+# Application shortcuts and workspace placement.
+bindsym $mod+F2 exec firefox
+bindsym $mod+F3 exec pcmanfm
+bindsym $mod+F4 exec ~/.dotfiles/f1/start.sh
+bindsym $mod+Ctrl+Shift+m exec pavucontrol
+assign [app_id="rider"] $ws3
+assign [class="(?i)rider"] $ws3
+assign [class="Slack"] $ws4
+assign [class="Spotify"] $ws8
+for_window [app_id="pavucontrol"] floating enable
+for_window [class="(?i)jetbrains-toolbox"] floating enable
+for_window [class="(?i)postman"] floating enable
+for_window [urgent=latest] focus
+
+# PipeWire controls (pactl remains compatible through pipewire-pulse).
+bindsym XF86AudioPlay exec playerctl play-pause
+bindsym XF86AudioPause exec playerctl play-pause
+bindsym XF86AudioNext exec playerctl next
+bindsym XF86AudioPrev exec playerctl previous
+bindsym XF86AudioRaiseVolume exec sh -c 'pactl set-sink-volume @DEFAULT_SINK@ +5%; pkill -RTMIN+1 i3blocks'
+bindsym XF86AudioLowerVolume exec sh -c 'pactl set-sink-volume @DEFAULT_SINK@ -5%; pkill -RTMIN+1 i3blocks'
+bindsym XF86AudioMute exec sh -c 'pactl set-sink-mute @DEFAULT_SINK@ toggle; pkill -RTMIN+1 i3blocks'
+bindsym XF86AudioMicMute exec pactl set-source-mute @DEFAULT_SOURCE@ toggle
+bindsym XF86MonBrightnessUp exec brightnessctl set +5%
+bindsym XF86MonBrightnessDown exec brightnessctl set 5%-
+
+# Wayland screenshots: Print=full, Mod+Print=focused, Mod+Shift+Print=region.
+bindsym Print exec ~/.dotfiles/bin/wayland-screenshot full
+bindsym $mod+Print exec ~/.dotfiles/bin/wayland-screenshot window
+bindsym $mod+Shift+Print exec ~/.dotfiles/bin/wayland-screenshot region
+
+set $mode_screenshot Screenshot: (f)ull (w)indow (s)elect | +Shift=clipboard
+bindsym $mod+p mode "$mode_screenshot"
+mode "$mode_screenshot" {
+    bindsym f exec ~/.dotfiles/bin/wayland-screenshot full, mode "default"
+    bindsym w exec ~/.dotfiles/bin/wayland-screenshot window, mode "default"
+    bindsym s exec ~/.dotfiles/bin/wayland-screenshot region, mode "default"
+    bindsym Shift+f exec ~/.dotfiles/bin/wayland-screenshot --clipboard full, mode "default"
+    bindsym Shift+w exec ~/.dotfiles/bin/wayland-screenshot --clipboard window, mode "default"
+    bindsym Shift+s exec ~/.dotfiles/bin/wayland-screenshot --clipboard region, mode "default"
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
+bindsym $mod+r mode "resize"
+mode "resize" {
+    bindsym j resize shrink width 5 px or 5 ppt
+    bindsym k resize grow height 5 px or 5 ppt
+    bindsym l resize shrink height 5 px or 5 ppt
+    bindsym semicolon resize grow width 5 px or 5 ppt
+    bindsym Left resize shrink width 10 px or 10 ppt
+    bindsym Down resize grow height 10 px or 10 ppt
+    bindsym Up resize shrink height 10 px or 10 ppt
+    bindsym Right resize grow width 10 px or 10 ppt
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
+set $mode_system (l)ock, (e)xit, (s)uspend, (h)ibernate, (r)eboot, (d)ocker, (Shift+s)hutdown
+bindsym $mod+0 mode "$mode_system"
+mode "$mode_system" {
+    bindsym l exec swaylock, mode "default"
+    bindsym e exec swaynag -t warning -m 'Exit Sway?' -b 'Yes' 'swaymsg exit', mode "default"
+    bindsym s exec systemctl suspend, mode "default"
+    bindsym h exec systemctl hibernate, mode "default"
+    bindsym r exec systemctl reboot, mode "default"
+    bindsym Shift+s exec systemctl poweroff, mode "default"
+    bindsym d exec ~/.dotfiles/bin/stop_docker, mode "default"
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
+bindsym $mod+9 exec swaylock
+bindsym $mod+Shift+c reload
+bindsym $mod+Shift+e exec swaynag -t warning -m 'Exit Sway?' -b 'Yes' 'swaymsg exit'
+bindsym $mod+m bar mode toggle
+
+# Session services and desktop integration.
+exec systemctl --user import-environment WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP
+exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP=sway
+exec /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
+exec nm-applet --indicator
+exec blueman-applet
+exec mako
+exec swayidle -w timeout 600 'swaylock -f' timeout 900 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' before-sleep 'swaylock -f'
+
+bar {
+    mode hide
+    position bottom
+    status_command i3blocks -c ~/.config/i3blocks/config
+    strip_workspace_numbers yes
+    colors {
+        background #002b36
+        statusline #839496
+        separator #2e7677
+        focused_workspace #2e7677 #2e7677 #fdf6e3
+        active_workspace #839496 #44475a #fdf6e3
+        inactive_workspace #2e7677 #002b36 #eee8d5
+        binding_mode #16a085 #2c2c2c #f9faf9
+        urgent_workspace #282a36 #859900 #ffffff
+    }
+}
+
+client.focused #2e7677 #2e7677 #f8f8f2 #2e7677 #2e7677
+client.focused_inactive #839496 #44475a #f8f8f2 #44475a #44475a
+client.unfocused #282a36 #282a36 #bfbfbf #282a36 #073642
+client.urgent #282a36 #859900 #ffffff #859900 #859900
+client.placeholder #282a36 #282a36 #f8f8f2 #282a36 #282a36
+client.background #002b36

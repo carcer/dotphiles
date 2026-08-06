@@ -19,9 +19,25 @@ Install required packages using homebrew
 linux
 -----
 
-Setup Linux with sensible default options
+Bootstrap the Framework workstation on CachyOS/Arch. The script installs
+official repository packages first, bootstraps `yay` without requiring Pamac,
+then installs AUR packages, global npm tools, Herdr, and Oh My Zsh.
+
+### packages/arch-repo
+
+Packages installed from configured Pacman repositories.
+
+### packages/arch-aur
+
+Packages installed through `yay`. Review AUR sources before installation.
+
+### packages/npm
+
+Unpinned global developer CLIs installed as the user. A distro npm is given a
+user-owned `$HOME/.local` prefix; an active NVM prefix is preserved.
 
 ### packages/apt
 
-Install required packages using apt
+Deprecated historical compatibility list. It is not consumed by `deploy/linux`.
 
+See `CACHYOS-MIGRATION.md` for the fixed partition map and migration procedure.

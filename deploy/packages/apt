@@ -1,7 +1,8 @@
 #
 # dotphiles : https://github.com/dotphiles/dotphiles
 #
-# packages to be install with apt-get
+# Deprecated compatibility manifest.
+# CachyOS/Arch deployment now uses arch-repo and arch-aur.
 #
 # Authors:
 #    Ben O'Hara <bohara@gmail.com>

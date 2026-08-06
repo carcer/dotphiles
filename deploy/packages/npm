@@ -1,0 +1,9 @@
+# Global npm tools used on the Framework workstation.
+# Intentionally unpinned: deployment installs the current release.
+@openai/codex
+@anthropic-ai/claude-code
+@sechroom/cli
+@usebruno/cli
+http-server
+pnpm
+turbo

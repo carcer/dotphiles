@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+clipboard=false
+if [[ "${1:-}" == --clipboard ]]; then
+  clipboard=true
+  shift
+fi
+
+mode=${1:-full}
+
+case "$mode" in
+  full|window|region) ;;
+  *)
+    echo "Usage: ${0##*/} [--clipboard] {full|window|region}" >&2
+    exit 2
+    ;;
+esac
+
+directory=${XDG_PICTURES_DIR:-"$HOME/Pictures"}/Screenshots
+mkdir -p "$directory"
+output="$directory/$(date +'%Y-%m-%d_%H-%M-%S').png"
+
+case "$mode" in
+  full)
+    geometry=()
+    ;;
+  window)
+    rect=$(swaymsg -t get_tree | jq -r '.. | select(.focused? == true).rect | "\(.x),\(.y) \(.width)x\(.height)"' | head -n1)
+    [[ -n "$rect" ]] || { echo "Unable to determine focused window geometry" >&2; exit 1; }
+    geometry=(-g "$rect")
+    ;;
+  region)
+    rect=$(slurp)
+    [[ -n "$rect" ]] || exit 0
+    geometry=(-g "$rect")
+    ;;
+esac
+
+if $clipboard; then
+  grim "${geometry[@]}" - | wl-copy --type image/png
+  notify-send "Screenshot copied" "$mode capture"
+else
+  grim "${geometry[@]}" "$output"
+  notify-send "Screenshot saved" "$output"
+fi

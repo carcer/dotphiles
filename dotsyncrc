@@ -42,6 +42,9 @@ gitversion
 htop:.config/htop
 i3
 i3blocks:.config/i3blocks
+sway:.config/sway
+fuzzel:.config/fuzzel
+mako:.config/mako
 #i3status/i3status.conf:.config/i3status/config
 systemd/logind.conf.d:.config/systemd/logind.conf.d
 systemd/sleep.conf.d:.config/systemd/sleep.conf.d
@@ -82,7 +85,8 @@ ssh
 #subversion
 #task/task
 #task/taskrc
-tmux/tmux.conf
+# tmux is retained as historical fallback only; Herdr is the target workflow.
+#tmux/tmux.conf
 vim/dotvim:.vim
 vim/vimrc
 vim/gvimrc
@@ -118,4 +122,3 @@ chris-virtualbox                 git=ANY
 #host8.example.net               rsync=host2.example.com                                #rsync mirror, push from host2
 #host9.example.net               rsync=host2.example.com                                #rsync mirror, push from host2
 [endhosts]
-

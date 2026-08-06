@@ -1,0 +1,62 @@
+# Official Arch/CachyOS repository packages.
+# Keep one package per line; deploy/linux installs this file with pacman.
+base-devel
+git
+github-cli
+curl
+jq
+zsh
+keychain
+nodejs
+npm
+vim
+kitty
+firefox
+
+# Sway / Wayland desktop
+sway
+swaybg
+swayidle
+swaylock
+fuzzel
+mako
+wl-clipboard
+grim
+slurp
+i3blocks
+brightnessctl
+playerctl
+network-manager-applet
+polkit-gnome
+libnotify
+xdg-desktop-portal-wlr
+xdg-desktop-portal-gtk
+qt5-wayland
+qt6-wayland
+
+# Audio, Bluetooth, hardware and authentication
+pipewire
+pipewire-alsa
+pipewire-pulse
+wireplumber
+pavucontrol
+bluez
+bluez-utils
+blueman
+fwupd
+fprintd
+libfprint
+framework-system
+mesa-utils
+
+# Development and workstation applications
+docker
+docker-compose
+dotnet-sdk
+aspnet-runtime
+protobuf
+vlc
+qbittorrent
+keepassxc
+timeshift
+libmicrodns

@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+target=${1:-}
+if [[ -z "$target" ]]; then
+  echo "Usage: ${0##*/} <branch>" >&2
+  exit 2
+fi
+
+repo=${DOTFILES_REPO:-"$HOME/.dotfiles"}
+host=$(hostname -s)
+case "$host" in
+  chris-framework) expected=envs/framework ;;
+  Chriss-MacBook-Air*) expected=envs/mac ;;
+  xps-2019|chris-xps159500) expected=envs/xps-2019 ;;
+  *) expected= ;;
+esac
+
+if [[ -n "$expected" && "$target" != "$expected" ]]; then
+  echo "Refusing live dotfiles switch on $host: expected $expected, requested $target." >&2
+  echo "Use ordinary Git commands only after stopping the graphical session and reviewing symlink impact." >&2
+  exit 1
+fi
+
+if [[ -n "$(git -C "$repo" status --porcelain)" ]]; then
+  echo "Refusing branch switch: $repo has uncommitted changes." >&2
+  exit 1
+fi
+
+git -C "$repo" switch "$target"
