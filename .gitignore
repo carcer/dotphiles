@@ -43,3 +43,4 @@ aws/credentials
 gitversion/gitversion
 jetbrains
 expressvpn
+zsh/secrets.local

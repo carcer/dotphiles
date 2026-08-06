@@ -110,6 +110,7 @@ tensorflow
 terminus-font
 texinfo
 tlp
+tmux
 ufw
 ventoy
 vi

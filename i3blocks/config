@@ -149,6 +149,11 @@ command=curl -Ss 'https://wttr.in/utila?format=+%C+%t(%f)+%w\n'
 interval=3600
 color=#A4C2F4
 
+[claude-status]
+command=~/.dotfiles/i3blocks/claude-status/claude-status
+interval=300
+markup=pango
+
 
 [time]
 command=date '+%d.%m %H:%M'

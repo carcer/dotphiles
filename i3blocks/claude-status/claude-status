@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -u
+
+URL="https://status.claude.com/api/v2/status.json"
+
+response=$(curl -Ss --max-time 5 "$URL" 2>/dev/null) || response=""
+
+if [ -z "$response" ]; then
+    indicator="unreachable"
+elif command -v jq >/dev/null 2>&1; then
+    indicator=$(printf '%s' "$response" | jq -r '.status.indicator // "unknown"')
+else
+    indicator=$(printf '%s' "$response" | grep -oE '"indicator"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed -E 's/.*"([^"]*)"$/\1/')
+    [ -z "$indicator" ] && indicator="unknown"
+fi
+
+case "$indicator" in
+    none)        icon=$''; color="#859900" ;;  # check-circle, green
+    minor)       icon=$''; color="#b58900" ;;  # warning, yellow
+    major)       icon=$''; color="#cb4b16" ;;  # warning, orange
+    critical)    icon=$''; color="#dc322f" ;;  # times-circle, red
+    *)           icon=$''; color="#6c71c4" ;;  # question, violet
+esac
+
+printf "<span font='FontAwesome'>%s</span> Claude\n" "$icon"
+printf "Claude\n"
+printf "%s\n" "$color"

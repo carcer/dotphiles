@@ -1,0 +1,14 @@
+[Unit]
+Description=Reset MT7925 BT module at boot to recover from wmt firmware timeout
+Documentation=https://community.frame.work/t/framework-13-ryzen-ai-350-wont-suspend-in-linux-due-to-mt7925e/70830
+After=systemd-modules-load.service
+Before=bluetooth.service
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/usr/bin/sh -c '/usr/bin/modprobe -r btusb mt7925e; /usr/bin/sleep 2; /usr/bin/modprobe mt7925e; /usr/bin/sleep 2; /usr/bin/modprobe btusb'
+
+[Install]
+WantedBy=bluetooth.service

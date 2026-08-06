@@ -83,8 +83,6 @@ ssh
 #task/task
 #task/taskrc
 tmux/tmux.conf
-tmux/tmux.local.conf
-tmux/tmuxinator
 vim/dotvim:.vim
 vim/vimrc
 vim/gvimrc

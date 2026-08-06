@@ -122,3 +122,13 @@ export PATH="$HOME/.local/bin:$PATH"
 
 # Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
 export PATH="$PATH:$HOME/.rvm/bin"
+
+# Local secrets (gitignored; see zsh/secrets.local)
+[ -f "$HOME/.dotfiles/zsh/secrets.local" ] && source "$HOME/.dotfiles/zsh/secrets.local"
+
+# tmux keybinding cheatsheet
+alias tcheat="$HOME/.dotfiles/tmux/cheatsheet.sh"
+
+alias claude-ocd='CLAUDE_CONFIG_DIR=~/.claude-ocd /home/chris/.local/bin/claude'
+alias claude-abcs='CLAUDE_CONFIG_DIR=~/.claude-abcs /home/chris/.local/bin/claude'
+alias claude="echo 'Use specific commands: claude-ocd or claude-abcs'"
