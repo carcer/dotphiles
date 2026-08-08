@@ -27,10 +27,9 @@ dotsync/bin/dotsync -l
 ## Architecture
 
 ### Branch Strategy
-- `master` — shared base configuration
-- `envs/*` — per-machine branches with machine-specific overrides
-  - `envs/framework` — Framework Laptop 13 AMD (current workstation)
-  - `envs/mac` — macOS
+- `master` — shared configuration and the Framework Laptop 13 AMD workstation
+- `envs/*` — temporary per-platform or legacy branches with machine-specific overrides
+  - `envs/mac` — macOS; keep as an overlay while shared changes move to `master`
   - `envs/xps-2019`, `envs/i3` — other machines
 - Machine-to-branch mapping is in `dotsyncrc` under `[hosts]`
 
@@ -45,7 +44,7 @@ config/rofi:.config/rofi     # → ~/.config/rofi
 
 The `[hosts]` section maps hostnames to environment branches:
 ```
-chris-framework     git=envs/framework
+chris-framework     git=master
 ```
 
 ### Submodules

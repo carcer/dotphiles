@@ -10,7 +10,7 @@ if [ ! -f "$id" ]; then
    exit;
 fi
 
-git clone --recurse-submodules --branch envs/framework git@github.com:carcer/dotphiles.git $dest
+git clone --recurse-submodules --branch master git@github.com:carcer/dotphiles.git $dest
 cd $dest
 git submodule update --init --recursive
 

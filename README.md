@@ -1,4 +1,4 @@
-https://raw.githubusercontent.com/carcer/dotphiles/envs/framework/install.sh
+https://raw.githubusercontent.com/carcer/dotphiles/master/install.sh
 
 # dotphiles
 
