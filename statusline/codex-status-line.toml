@@ -1,0 +1,14 @@
+# Shared Codex status-line selection. The installer patches only these fields
+# in the user's existing ~/.codex/config.toml.
+
+[tui]
+status_line = [
+  "current-dir",
+  "git-branch",
+  "context-used",
+  "five-hour-limit",
+  "weekly-limit",
+  "model-with-reasoning",
+  "task-progress",
+]
+status_line_use_colors = true
