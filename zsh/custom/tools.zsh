@@ -98,10 +98,6 @@ function bdmachine() {
   eval "$(docker-machine env default)"
 }
 
-#tmux
-alias tx=tmuxinator
-alias tkill='tmux kill-server'
-
 alias dm='docker-machine'
 
 # Dev short-cuts.

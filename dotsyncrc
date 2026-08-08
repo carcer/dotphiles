@@ -76,8 +76,6 @@ ssh
 #subversion
 #task/task
 #task/taskrc
-tmux/tmux.conf
-tmux/tmux.local.conf
 vim/dotvim:.vim
 vim/vimrc
 vim/gvimrc
@@ -112,4 +110,3 @@ chris-virtualbox                 git=ANY
 #host8.example.net               rsync=host2.example.com                                #rsync mirror, push from host2
 #host9.example.net               rsync=host2.example.com                                #rsync mirror, push from host2
 [endhosts]
-

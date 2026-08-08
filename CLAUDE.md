@@ -6,17 +6,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A personal dotfiles repo built on the [dotphiles](https://github.com/dotphiles/dotphiles) framework. It lives at `~/.dotfiles` and is driven by [`dotsync`](https://github.com/dotphiles/dotsync), which symlinks selected files out of this repo into `$HOME`. The actual config files here are *sources*; the live files in `$HOME` are symlinks back to them, so editing a file in this repo edits the running config directly.
 
-## Branch-per-machine model
+## Trunk and platform overlays
 
-This is the single most important thing to understand: **each machine runs a different git branch**, not `master`. The `[hosts]` section of `dotsyncrc` maps a hostname to its branch:
+`master` is the shared trunk and the active Framework configuration. The Mac remains on a temporary platform overlay while its reusable configuration is promoted incrementally. The `[hosts]` section of `dotsyncrc` maps each hostname:
 
 ```
 Chriss-MacBook-Air.local   git=envs/mac
+chris-framework            git=master
 xps-2019                   git=envs/xps-2019
 xps-i3 / chris-xps159500   git=envs/i3
 ```
 
-So `envs/mac` is the macOS config, `envs/i3` the Linux/i3 config, etc. `master` is a base, and changes are cherry-picked / merged per environment. When making a change, work on the branch for the target environment — do not assume `master`. Branches diverge intentionally (different `dotsyncrc` enables, different packages, macOS vs Linux tooling).
+Put reusable configuration on `master`; keep only macOS-specific installation and presentation differences on `envs/mac`. Do not switch branches casually in a live checkout because home-directory symlinks point into the working tree. Use comparison, cherry-picking, or a separate worktree for cross-platform changes.
 
 ## How symlinking works (dotsync)
 
@@ -47,6 +48,7 @@ Several directories are git submodules (see `.gitmodules`): `dotsync`, `zsh/dotz
 
 ## Layout notes
 
-- Each top-level dir is one tool's config (`git/`, `tmux/`, `vim/`, `ssh/`, `kitty/`, `i3/`, etc.). Only those uncommented in `dotsyncrc` are active on a given branch.
+- Each top-level dir is one tool's config (`git/`, `vim/`, `ssh/`, `kitty/`, `i3/`, etc.). Only those uncommented in `dotsyncrc` are active on a given branch.
+- Herdr supersedes the former tmux configuration on both active machines.
 - `zsh/` uses oh-my-zsh with the `spaceship` theme; `ZSH_CUSTOM` points at `zsh/custom/`. The actual settings live in `zsh/zshrc`.
 - `bin/` is linked to `~/bin` and holds personal scripts (`az`, `kill_docker`, `webstorm`, etc.).

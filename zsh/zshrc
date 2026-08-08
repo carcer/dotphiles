@@ -93,7 +93,8 @@ SPACESHIP_PROMPT_ADD_NEWLINE=false
 # Multiple Claude Code accounts. Each uses its own config/auth dir via
 # CLAUDE_CONFIG_DIR. Launch each once and run `/login` to authenticate it.
 alias claude-ocd='CLAUDE_CONFIG_DIR="$HOME/.claude-ocd" command claude'
-alias claude-abc='CLAUDE_CONFIG_DIR="$HOME/.claude-abc" command claude'
+alias claude-abcs='CLAUDE_CONFIG_DIR="$HOME/.claude-abcs" command claude'
+alias claude="echo 'Use specific commands: claude-ocd or claude-abcs'"
 
 # Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
 export PATH="$PATH:$HOME/.rvm/bin"
