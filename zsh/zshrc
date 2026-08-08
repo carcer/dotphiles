@@ -134,9 +134,13 @@ export PATH="$PATH:$HOME/.rvm/bin"
 # Local secrets (gitignored; see zsh/secrets.local)
 [ -f "$HOME/.dotfiles/zsh/secrets.local" ] && source "$HOME/.dotfiles/zsh/secrets.local"
 
-# tmux keybinding cheatsheet
-alias tcheat="$HOME/.dotfiles/tmux/cheatsheet.sh"
-
 alias claude-ocd='CLAUDE_CONFIG_DIR=~/.claude-ocd /home/chris/.local/bin/claude'
 alias claude-abcs='CLAUDE_CONFIG_DIR=~/.claude-abcs /home/chris/.local/bin/claude'
 alias claude="echo 'Use specific commands: claude-ocd or claude-abcs'"
+
+# Reset terminal mouse tracking at each prompt. A program suspended with
+# Ctrl+Z cannot emit its disable sequence, which otherwise makes kitty send
+# wheel events to zsh history instead of scrolling its own scrollback.
+autoload -Uz add-zsh-hook
+__reset_mouse_tracking() { print -n '\e[?1000l\e[?1002l\e[?1003l\e[?1006l\e[?1015l' }
+add-zsh-hook precmd __reset_mouse_tracking
