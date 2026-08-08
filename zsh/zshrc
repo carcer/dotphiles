@@ -109,11 +109,14 @@ if [ -d "$HOME/.ssh/master" ]; then
   find "$HOME/.ssh/master" -type f ! -name '*.pub' -exec chmod 600 {} \;
 fi
 
-ssh_keys=(~/.ssh/master/id_*(N))
+ssh_keys=()
+for ssh_key in ~/.ssh/master/id_*(N); do
+  [[ "$ssh_key" == *.pub ]] || ssh_keys+=("$ssh_key")
+done
 if (( ${#ssh_keys} )); then
-  eval $(keychain --eval --quiet $ssh_keys)
+  eval $(keychain --eval --quiet "${ssh_keys[@]}")
 fi
-unset ssh_keys
+unset ssh_key ssh_keys
 
 # pnpm
 export PNPM_HOME="/home/chris/.local/share/pnpm"
