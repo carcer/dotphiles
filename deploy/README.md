@@ -22,8 +22,9 @@ linux
 Bootstrap the Framework workstation on CachyOS/Arch. The script installs
 official repository packages first, bootstraps `yay` without requiring Pamac,
 then installs AUR packages, global npm tools, Herdr, and Oh My Zsh. Finally it
-runs `configure-system.sh` to enable fingerprint authentication for installed
-sudo/Ly/swaylock PAM services and configure Limine's one-second hidden menu.
+runs the shared Codex/Claude status-line installer and `configure-system.sh` to
+enable fingerprint authentication for installed sudo/Ly/swaylock PAM services
+and configure Limine's one-second hidden menu.
 
 `configure-system.sh` patches only the relevant lines in distro-owned files. It
 keeps password authentication intact and stores the first-seen originals beside
