@@ -17,8 +17,14 @@ if ! command -v herdr >/dev/null 2>&1; then
   exit 1
 fi
 
-for integration in codex claude; do
-  herdr integration install "$integration"
-done
+herdr integration install codex
+
+if command -v claude >/dev/null 2>&1; then
+  for profile in ocd abcs; do
+    config_dir="$HOME/.claude-$profile"
+    mkdir -p "$config_dir"
+    CLAUDE_CONFIG_DIR="$config_dir" herdr integration install claude
+  done
+fi
 
 herdr --version

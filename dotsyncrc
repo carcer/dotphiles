@@ -28,6 +28,12 @@ ctags/ctags
 #curl/curlrc
 config/rofi:.config/rofi
 config/picom.conf:.config/picom.conf
+config/applications/firefox.desktop:.local/share/applications/firefox.desktop
+config/fish/config.fish:.config/fish/config.fish
+config/fish/conf.d:.config/fish/conf.d
+config/fish/functions:.config/fish/functions
+config/gtk-3.0/settings.ini:.config/gtk-3.0/settings.ini
+config/gtk-4.0/settings.ini:.config/gtk-4.0/settings.ini
 kitty:.config/kitty
 pam.d
 dotnetvm

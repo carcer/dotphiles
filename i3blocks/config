@@ -78,6 +78,7 @@ label=cpu
 interval=10
 min_width=CPU 100.00%
 separator=false
+separator_block_width=7
 
 # Temperature
 #
@@ -87,10 +88,13 @@ separator=false
 [temperature]
 interval=10
 separator=false
+separator_block_width=7
 
 [load_average]
 label=load  
 interval=10
+separator=false
+separator_block_width=7
 
 # Volume indicator
 #
@@ -110,6 +114,7 @@ interval=10
 # The type defaults to "mem" if the instance is not specified.
 [memory]
 separator=false
+separator_block_width=7
 interval=30
 
 

@@ -8,7 +8,7 @@ export ZSH=/home/chris/.oh-my-zsh
 # it'll load a random theme each time that oh-my-zsh is loaded.
 # See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
 #ZSH_THEME="chriscanal"
-ZSH_THEME="spaceship"
+ZSH_THEME=""
 SPACESHIP_DOCKER_SYMBOL=""
 SPACESHIP_BATTERY_SHOW=false 
 
@@ -57,6 +57,7 @@ ZSH_CUSTOM=$HOME/.dotfiles/zsh/custom
 plugins=(git docker docker-compose npm zsh-syntax-highlighting nvm zsh-completions zsh-autosuggestions extract dotnet gitignore)
 
 source $ZSH/oh-my-zsh.sh
+eval "$(starship init zsh)"
 
 # User configuration
 
@@ -108,7 +109,11 @@ if [ -d "$HOME/.ssh/master" ]; then
   find "$HOME/.ssh/master" -type f ! -name '*.pub' -exec chmod 600 {} \;
 fi
 
-eval $(keychain --eval --quiet ~/.ssh/master/id_*)
+ssh_keys=(~/.ssh/master/id_*(N))
+if (( ${#ssh_keys} )); then
+  eval $(keychain --eval --quiet $ssh_keys)
+fi
+unset ssh_keys
 
 # pnpm
 export PNPM_HOME="/home/chris/.local/share/pnpm"

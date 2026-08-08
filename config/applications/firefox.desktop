@@ -1,0 +1,20 @@
+[Desktop Entry]
+Name=Firefox
+Comment=Browse the Web
+Exec=env -u GDK_SCALE -u GDK_DPI_SCALE /usr/lib/firefox/firefox %u
+Icon=firefox
+Terminal=false
+Type=Application
+StartupNotify=true
+StartupWMClass=firefox
+Categories=Network;WebBrowser;
+MimeType=application/json;application/pdf;application/rdf+xml;application/rss+xml;application/x-xpinstall;application/xhtml+xml;application/xml;audio/flac;audio/ogg;audio/webm;image/avif;image/gif;image/jpeg;image/png;image/svg+xml;image/webp;text/html;text/xml;video/ogg;video/webm;x-scheme-handler/chrome;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/mailto;
+Actions=NewWindow;NewPrivateWindow;
+
+[Desktop Action NewWindow]
+Name=New Window
+Exec=env -u GDK_SCALE -u GDK_DPI_SCALE /usr/lib/firefox/firefox --new-window %u
+
+[Desktop Action NewPrivateWindow]
+Name=New Private Window
+Exec=env -u GDK_SCALE -u GDK_DPI_SCALE /usr/lib/firefox/firefox --private-window %u
