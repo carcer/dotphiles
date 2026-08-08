@@ -12,6 +12,7 @@ import json
 import os
 import re
 import shlex
+import shutil
 import stat
 import sys
 import tempfile
@@ -67,6 +68,38 @@ def atomic_write(path, content, mode=None):
         except OSError:
             pass
         raise
+
+
+def ensure_original_backup(path):
+    """Create one exact, mode-preserving backup beside an existing target."""
+
+    target = resolved_target(path)
+    if not target.exists():
+        return "missing"
+
+    backup = target.with_name(target.name + ".dotphiles-original")
+    if os.path.lexists(str(backup)):
+        return "existing"
+
+    mode = stat.S_IMODE(target.stat().st_mode)
+    fd, temporary = tempfile.mkstemp(
+        prefix=".%s.dotphiles-original." % target.name,
+        dir=str(target.parent),
+    )
+    try:
+        with target.open("rb") as source, os.fdopen(fd, "wb") as destination:
+            shutil.copyfileobj(source, destination)
+            destination.flush()
+            os.fsync(destination.fileno())
+        os.chmod(temporary, mode)
+        os.replace(temporary, str(backup))
+    except Exception:
+        try:
+            os.unlink(temporary)
+        except OSError:
+            pass
+        raise
+    return "created"
 
 
 def json_top_level_members(content):
@@ -209,8 +242,12 @@ def patch_claude_settings(path, command, dry_run):
         raise RuntimeError("surgical JSON patch produced invalid JSON in %s: %s" % (path, error))
     if not dry_run:
         mode = stat.S_IMODE(resolved_target(path).stat().st_mode) if exists else 0o600
+        backup_state = ensure_original_backup(path) if exists else "missing"
         atomic_write(path, updated, mode)
-    return "would update" if dry_run else "updated", "statusLine"
+    detail = "statusLine"
+    if not dry_run and exists:
+        detail += "; original backup %s" % backup_state
+    return "would update" if dry_run else "updated", detail
 
 
 def line_ending(content):
@@ -349,8 +386,12 @@ def patch_codex_config(path, dry_run):
         return "unchanged", "already configured"
     if not dry_run:
         mode = stat.S_IMODE(resolved_target(path).stat().st_mode) if exists else 0o600
+        backup_state = ensure_original_backup(path) if exists else "missing"
         atomic_write(path, updated, mode)
-    return "would update" if dry_run else "updated", "status_line/status_line_use_colors"
+    detail = "status_line/status_line_use_colors"
+    if not dry_run and exists:
+        detail += "; original backup %s" % backup_state
+    return "would update" if dry_run else "updated", detail
 
 
 def display_result(label, path, result):

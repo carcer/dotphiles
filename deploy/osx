@@ -744,6 +744,17 @@ if [[ -f $DIR/packages/homebrew ]]; then
 fi
 
 ###############################################################################
+# Codex and Claude Code status lines                                           #
+###############################################################################
+
+STATUSLINE_INSTALLER="$DIR/../statusline/install.sh"
+if [[ -x "$STATUSLINE_INSTALLER" ]]; then
+  "$STATUSLINE_INSTALLER"
+else
+  echo "Status-line installer not found; skipping: $STATUSLINE_INSTALLER"
+fi
+
+###############################################################################
 # Kill affected applications                                                  #
 ###############################################################################
 
@@ -753,4 +764,3 @@ fi
 #     killall "${app}" > /dev/null 2>&1
 # done
 echo "Done. Note that some of these changes require a logout/restart to take effect."
-

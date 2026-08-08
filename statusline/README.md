@@ -29,6 +29,12 @@ gets a minimal `settings.json` when that profile is selected. Set
 profile lives somewhere else. Set `DOTFILES_ROOT` when running the installer
 from a different checkout.
 
+Before changing an existing target, the installer creates one exact,
+mode-preserving sibling backup: `config.toml.dotphiles-original` or
+`settings.json.dotphiles-original`. It never overwrites that backup and doesn't
+create one for a no-op run or a newly-created ABCS settings file. Symlinks are
+resolved before both the target and its backup are written.
+
 The Claude command points back to this checkout, so updating the shared script
 using `$HOME/.dotfiles/...` on the normal Mac checkout. A checkout outside
 `$HOME` gets a quoted absolute path. Updating the shared script doesn't require
@@ -38,6 +44,9 @@ read from stdin; `jq`, `git`, and the standard shell tools are required.
 Before this migration, OCD was the only profile with a status line. The normal
 Mac install enables the same shared renderer for default Claude, OCD, and ABCS;
 it doesn't copy any profile settings or account state between them.
+
+`deploy/osx` invokes this installer through its script-relative path, without
+`sudo`, after the package steps finish.
 
 To check the installer twice for idempotence:
 
