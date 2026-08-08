@@ -15,5 +15,5 @@ echo
 echo "If no prints are listed, run: fprintd-enroll"
 echo "Then verify with: fprintd-verify"
 echo
-echo "PAM configuration is intentionally not rewritten automatically."
-echo "Confirm password authentication remains available before enabling fingerprint PAM."
+echo "Fingerprint PAM for installed services is managed by deploy/configure-system.sh."
+echo "Password authentication remains in each distro-provided PAM stack as fallback."

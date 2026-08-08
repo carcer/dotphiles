@@ -30,7 +30,7 @@ for this laptop inside the installer.
 
 1. Mount the existing home filesystem without formatting it and retain username `chris`.
 2. Clone/switch to `envs/framework`, then run `deploy/linux`.
-3. Run dotsync to restore links, and install the system-level Framework workarounds deliberately.
+3. Run dotsync to restore links. `deploy/linux` applies the managed PAM and Limine settings via `deploy/configure-system.sh`.
 4. Re-enroll and verify fingerprints with `deploy/verify-fingerprint.sh`.
 5. Validate Sway with `sway --validate --config ~/.config/sway/config`.
 6. Run `deploy/post-install-smoke.sh` and work through the validation checklist.

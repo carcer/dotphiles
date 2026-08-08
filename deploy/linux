@@ -57,6 +57,7 @@ fi
 "$DIR/install-npm-globals.sh"
 "$DIR/install-herdr.sh"
 "$DIR/oh-my-zsh.sh"
+sudo "$DIR/configure-system.sh"
 
 # sudo update-alternatives --install /usr/bin/vi vi /usr/bin/nvim 60
 # sudo update-alternatives --config vi
