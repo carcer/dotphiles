@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Avoid stacking another locker while one is already active.
+if pgrep -x swaylock >/dev/null; then
+    exit 0
+fi
+
+runtime_dir=${XDG_RUNTIME_DIR:-/tmp}
+lock_image=$(mktemp "${runtime_dir}/swaylock-blur.XXXXXX.png")
+trap 'rm -f "$lock_image"' EXIT
+
+# Capture the current desktop, shrink it before blurring for speed, then restore
+# it to its original size. The resulting image remains local to this session.
+grim - | magick png:- -scale 10% -blur 0x2.5 -resize 1000% "png:${lock_image}"
+
+swaylock --image "$lock_image" --scaling fill "$@"

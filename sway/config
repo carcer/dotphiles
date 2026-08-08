@@ -174,7 +174,7 @@ mode "resize" {
 set $mode_system (l)ock, (e)xit, (s)uspend, (h)ibernate, (r)eboot, (d)ocker, (Shift+s)hutdown
 bindsym $mod+0 mode "$mode_system"
 mode "$mode_system" {
-    bindsym l exec swaylock, mode "default"
+    bindsym l exec ~/.dotfiles/bin/wayland-blurlock, mode "default"
     bindsym e exec swaynag -t warning -m 'Exit Sway?' -b 'Yes' 'swaymsg exit', mode "default"
     bindsym s exec systemctl suspend, mode "default"
     bindsym h exec systemctl hibernate, mode "default"
@@ -185,7 +185,7 @@ mode "$mode_system" {
     bindsym Escape mode "default"
 }
 
-bindsym $mod+9 exec swaylock
+bindsym $mod+9 exec ~/.dotfiles/bin/wayland-blurlock
 bindsym $mod+Shift+c reload
 bindsym $mod+Shift+e exec swaynag -t warning -m 'Exit Sway?' -b 'Yes' 'swaymsg exit'
 bindsym $mod+m bar mode toggle
@@ -197,7 +197,7 @@ exec /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
 exec nm-applet --indicator
 exec blueman-applet
 exec mako
-exec swayidle -w timeout 600 'swaylock -f' timeout 900 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' before-sleep 'swaylock -f'
+exec swayidle -w timeout 600 '~/.dotfiles/bin/wayland-blurlock -f' timeout 900 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' before-sleep '~/.dotfiles/bin/wayland-blurlock -f'
 
 bar {
     mode hide
