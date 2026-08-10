@@ -10,6 +10,7 @@ trap 'rm -rf "$fixture"' EXIT
 mkdir -p "$fixture/codex" "$fixture/claude" "$fixture/ocd" "$fixture/ocd-real" "$fixture/abcs"
 
 test -x "$script_dir/claude-statusline.sh"
+test -x "$script_dir/codex-rate-limits.py"
 test -x "$script_dir/install.py"
 test -x "$script_dir/install.sh"
 grep -F 'STATUSLINE_INSTALLER="$DIR/../statusline/install.sh"' "$repo_root/deploy/osx" >/dev/null
@@ -165,11 +166,52 @@ assert stat.S_IMODE((root / "ocd-real/settings.json").stat().st_mode) == 0o640
 assert stat.S_IMODE((root / "ocd-real/settings.json.dotphiles-original").stat().st_mode) == 0o640
 PY
 
-status_input='{"model":{"display_name":"Claude Test"},"workspace":{"current_dir":"/tmp"},"context_window":{"context_window_size":200000,"total_input_tokens":1000,"used_percentage":1},"rate_limits":{"five_hour":{"used_percentage":1},"seven_day":{"used_percentage":2}}}'
+mkdir -p "$fixture/bin" "$fixture/cache"
+cat > "$fixture/bin/codex" <<'EOF'
+#!/usr/bin/env bash
+IFS= read -r initialize
+printf '%s\n' '{"id":1,"result":{"userAgent":"fixture"}}'
+IFS= read -r rate_limits
+printf '%s\n' '{"id":2,"result":{"rateLimits":{"limitId":"codex","primary":{"usedPercent":7,"windowDurationMins":10080,"resetsAt":1893456000},"secondary":null},"rateLimitsByLimitId":{"codex":{"limitId":"codex","primary":{"usedPercent":7,"windowDurationMins":10080,"resetsAt":1893456000},"secondary":null}}}}'
+EOF
+chmod +x "$fixture/bin/codex"
+
+rate_limit_cache="$fixture/cache/codex-rate-limits.json"
+CODEX_BIN="$fixture/bin/codex" \
+CODEX_RATE_LIMIT_CACHE="$rate_limit_cache" \
+  "$script_dir/codex-rate-limits.py" --refresh
+jq -e '
+  .rateLimits.primary.usedPercent == 7
+  and .rateLimits.primary.windowDurationMins == 10080
+  and (.rateLimits | keys | sort) == ["primary", "secondary"]
+  and (keys | sort) == ["fetchedAt", "rateLimits"]
+  and (.fetchedAt | type == "number")' "$rate_limit_cache" >/dev/null
+test "$(stat -f '%Lp' "$rate_limit_cache" 2>/dev/null || stat -c '%a' "$rate_limit_cache")" = 600
+
+status_input='{"model":{"display_name":"Claude Test"},"workspace":{"current_dir":"/tmp"},"context_window":{"context_window_size":200000,"total_input_tokens":1000,"used_percentage":1},"rate_limits":{"five_hour":{"used_percentage":1},"seven_day":{"used_percentage":2,"resets_at":1893456000}}}'
 for settings in "$fixture/claude/settings.json" "$fixture/ocd/settings.json" "$fixture/abcs/settings.json"; do
   configured_command=$(jq -r '.statusLine.command' "$settings")
-  printf '%s\n' "$status_input" | eval "$configured_command" | grep -F 'Claude Test' >/dev/null
+  rendered=$(printf '%s\n' "$status_input" | \
+    CODEX_RATE_LIMIT_DISABLE_REFRESH=1 \
+    CODEX_RATE_LIMIT_CACHE="$rate_limit_cache" \
+    /bin/bash -c "$configured_command")
+  printf '%s' "$rendered" | grep -F 'Claude Test' >/dev/null
+  printf '%s' "$rendered" | grep -F 'OAI 1% 5h 2% wk' >/dev/null
+  ! printf '%s' "$rendered" | grep -F '7% wk' >/dev/null
 done
+
+cached_status_input='{"model":{"display_name":"Codex Proxy"},"workspace":{"current_dir":"/tmp"},"context_window":{"context_window_size":200000,"total_input_tokens":1000,"used_percentage":1}}'
+cached_rendered=$(printf '%s\n' "$cached_status_input" | \
+  CODEX_RATE_LIMIT_DISABLE_REFRESH=1 \
+  CODEX_RATE_LIMIT_CACHE="$rate_limit_cache" \
+  "$script_dir/claude-statusline.sh")
+printf '%s' "$cached_rendered" | grep -F 'OAI 7% wk' >/dev/null
+printf '%s' "$cached_rendered" | grep -F 'Codex Proxy' >/dev/null
+
+jq '.fetchedAt = 0' "$rate_limit_cache" > "$fixture/cache/stale.json"
+test -z "$(CODEX_RATE_LIMIT_DISABLE_REFRESH=1 \
+  CODEX_RATE_LIMIT_CACHE="$fixture/cache/stale.json" \
+  "$script_dir/codex-rate-limits.py")"
 
 HOME="$fixture" \
 DOTFILES_ROOT="$repo_root" \
