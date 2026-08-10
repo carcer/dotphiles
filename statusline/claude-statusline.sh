@@ -6,6 +6,7 @@
 
 set -u
 
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 input=$(cat)
 
 if ! printf '%s' "$input" | jq -e . >/dev/null 2>&1; then
@@ -88,13 +89,55 @@ percentage_high() {
 usage=""
 hour=$(printf '%s' "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
 week=$(printf '%s' "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
+week_reset=$(printf '%s' "$input" | jq -r '.rate_limits.seven_day.resets_at // empty')
+
+# ProxyCLI can provide rate limits inline. When it doesn't, use the last
+# successful read from Codex's account/rateLimits/read app-server method. The
+# cache helper refreshes asynchronously, so rendering never waits on a network
+# request or exposes Codex authentication state to Claude Code.
+if [ -z "$hour" ] && [ -z "$week" ] && [ -x "$script_dir/codex-rate-limits.py" ]; then
+  cached_limits=$("$script_dir/codex-rate-limits.py" 2>/dev/null || true)
+  if [ -n "$cached_limits" ]; then
+    hour=$(printf '%s' "$cached_limits" | jq -r '
+      (.rateLimitsByLimitId.codex // .rateLimits // {})
+      | [.primary, .secondary]
+      | map(select(.windowDurationMins != null and .windowDurationMins <= 360))
+      | .[0].usedPercent // empty' 2>/dev/null)
+    week=$(printf '%s' "$cached_limits" | jq -r '
+      (.rateLimitsByLimitId.codex // .rateLimits // {})
+      | [.primary, .secondary]
+      | map(select(.windowDurationMins != null and .windowDurationMins >= 10000))
+      | .[0].usedPercent // empty' 2>/dev/null)
+    week_reset=$(printf '%s' "$cached_limits" | jq -r '
+      (.rateLimitsByLimitId.codex // .rateLimits // {})
+      | [.primary, .secondary]
+      | map(select(.windowDurationMins != null and .windowDurationMins >= 10000))
+      | .[0].resetsAt // empty' 2>/dev/null)
+  fi
+fi
+
+format_reset() {
+  case "$1" in
+    ''|*[!0-9]*) return ;;
+  esac
+  if date -r "$1" '+%a %H:%M' >/dev/null 2>&1; then
+    date -r "$1" '+%a %H:%M'
+  else
+    date -d "@$1" '+%a %H:%M' 2>/dev/null || true
+  fi
+}
+
 if [ -n "$hour" ] || [ -n "$week" ]; then
   if { [ -n "$hour" ] && percentage_high "$hour"; } || { [ -n "$week" ] && percentage_high "$week"; }; then
     u_icon="⚠️"
   else
     u_icon="📊"
   fi
-  usage="${u_icon} ${hour:-0}/${week:-0}"
+  usage="${u_icon} OAI"
+  [ -n "$hour" ] && usage="${usage} ${hour}% 5h"
+  [ -n "$week" ] && usage="${usage} ${week}% wk"
+  reset_label=$(format_reset "$week_reset")
+  [ -n "$reset_label" ] && usage="${usage} ↻ ${reset_label}"
 fi
 
 loc="📁 ${dir}"
