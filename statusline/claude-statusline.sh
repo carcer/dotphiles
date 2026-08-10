@@ -15,6 +15,8 @@ if ! printf '%s' "$input" | jq -e . >/dev/null 2>&1; then
 fi
 
 model=$(printf '%s' "$input" | jq -r '.model.display_name // "Claude"')
+model_id=$(printf '%s' "$input" | jq -r '.model.id // ""')
+provider_hint=$(printf '%s' "$input" | jq -r '.model.provider // .provider // ""' | tr '[:upper:]' '[:lower:]')
 cwd=$(printf '%s' "$input" | jq -r '.workspace.current_dir // .cwd // "."')
 
 dir=$(basename "$cwd")
@@ -96,12 +98,25 @@ usage=""
 hour=$(printf '%s' "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
 week=$(printf '%s' "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
 week_reset=$(printf '%s' "$input" | jq -r '.rate_limits.seven_day.resets_at // empty')
+quota_label="ANT"
 
-# ProxyCLI can provide rate limits inline. When it doesn't, use the last
-# successful read from Codex's account/rateLimits/read app-server method. The
-# cache helper refreshes asynchronously, so rendering never waits on a network
-# request or exposes Codex authentication state to Claude Code.
-if [ -z "$hour" ] && [ -z "$week" ] && [ -x "$script_dir/codex-rate-limits.py" ]; then
+is_openai_model=false
+if [ "$provider_hint" = "openai" ] || \
+  printf '%s %s' "$model_id" "$model" | grep -Eqi '(^|[^[:alnum:]])(openai|chatgpt|gpt|codex|o[134])([^[:alnum:]]|$)'; then
+  is_openai_model=true
+  quota_label="OAI"
+  # Claude Code's inline rate_limits describe the Anthropic account even when
+  # ProxyCLI routes model traffic to OpenAI. Never label those values as OAI.
+  hour=""
+  week=""
+  week_reset=""
+fi
+
+# OpenAI models use the last successful read from Codex's
+# account/rateLimits/read app-server method. The cache helper refreshes
+# asynchronously, so rendering never waits on a network request or exposes
+# Codex authentication state to Claude Code.
+if [ "$is_openai_model" = true ] && [ -x "$script_dir/codex-rate-limits.py" ]; then
   cached_limits=$("$script_dir/codex-rate-limits.py" 2>/dev/null || true)
   if [ -n "$cached_limits" ]; then
     hour=$(printf '%s' "$cached_limits" | jq -r '
@@ -142,7 +157,7 @@ if [ -n "$hour" ] || [ -n "$week" ]; then
   else
     u_icon="📊"
   fi
-  usage="${u_icon} OAI"
+  usage="${u_icon} ${quota_label}"
   [ -n "$hour" ] && usage="${usage} ${hour}% 5h"
   [ -n "$week" ] && usage="${usage} ${week}% wk"
   reset_label=$(format_reset "$week_reset")
