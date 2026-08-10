@@ -188,26 +188,30 @@ jq -e '
   and (.fetchedAt | type == "number")' "$rate_limit_cache" >/dev/null
 test "$(stat -f '%Lp' "$rate_limit_cache" 2>/dev/null || stat -c '%a' "$rate_limit_cache")" = 600
 
-status_input='{"model":{"display_name":"Claude Test"},"workspace":{"current_dir":"/tmp"},"context_window":{"context_window_size":200000,"total_input_tokens":1000,"used_percentage":1},"rate_limits":{"five_hour":{"used_percentage":14.000000000000002},"seven_day":{"used_percentage":52.99999999999999,"resets_at":1893456000}}}'
+status_input='{"model":{"id":"claude-fable-5","display_name":"Fable 5","provider":"anthropic"},"workspace":{"current_dir":"/tmp"},"context_window":{"context_window_size":200000,"total_input_tokens":1000,"used_percentage":1},"rate_limits":{"five_hour":{"used_percentage":14.000000000000002},"seven_day":{"used_percentage":52.99999999999999,"resets_at":1893456000}}}'
 for settings in "$fixture/claude/settings.json" "$fixture/ocd/settings.json" "$fixture/abcs/settings.json"; do
   configured_command=$(jq -r '.statusLine.command' "$settings")
   rendered=$(printf '%s\n' "$status_input" | \
     CODEX_RATE_LIMIT_DISABLE_REFRESH=1 \
     CODEX_RATE_LIMIT_CACHE="$rate_limit_cache" \
     /bin/bash -c "$configured_command")
-  printf '%s' "$rendered" | grep -F 'Claude Test' >/dev/null
-  printf '%s' "$rendered" | grep -F 'OAI 14% 5h 53% wk' >/dev/null
+  printf '%s' "$rendered" | grep -F 'Fable 5' >/dev/null
+  printf '%s' "$rendered" | grep -F 'ANT 14% 5h 53% wk' >/dev/null
+  ! printf '%s' "$rendered" | grep -F 'OAI' >/dev/null
   ! printf '%s' "$rendered" | grep -F '.000000' >/dev/null
   ! printf '%s' "$rendered" | grep -F '7% wk' >/dev/null
 done
 
-cached_status_input='{"model":{"display_name":"Codex Proxy"},"workspace":{"current_dir":"/tmp"},"context_window":{"context_window_size":200000,"total_input_tokens":1000,"used_percentage":1}}'
+cached_status_input='{"model":{"id":"gpt-5.4","display_name":"Codex Proxy","provider":"openai"},"workspace":{"current_dir":"/tmp"},"context_window":{"context_window_size":200000,"total_input_tokens":1000,"used_percentage":1},"rate_limits":{"five_hour":{"used_percentage":15},"seven_day":{"used_percentage":53,"resets_at":1893456000}}}'
 cached_rendered=$(printf '%s\n' "$cached_status_input" | \
   CODEX_RATE_LIMIT_DISABLE_REFRESH=1 \
   CODEX_RATE_LIMIT_CACHE="$rate_limit_cache" \
   "$script_dir/claude-statusline.sh")
 printf '%s' "$cached_rendered" | grep -F 'OAI 7% wk' >/dev/null
 printf '%s' "$cached_rendered" | grep -F 'Codex Proxy' >/dev/null
+! printf '%s' "$cached_rendered" | grep -F '15% 5h' >/dev/null
+! printf '%s' "$cached_rendered" | grep -F '53% wk' >/dev/null
+! printf '%s' "$cached_rendered" | grep -F 'ANT' >/dev/null
 
 jq '.fetchedAt = 0' "$rate_limit_cache" > "$fixture/cache/stale.json"
 test -z "$(CODEX_RATE_LIMIT_DISABLE_REFRESH=1 \
