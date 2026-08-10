@@ -86,6 +86,12 @@ percentage_high() {
   awk -v value="$1" 'BEGIN { exit !(value >= 80) }'
 }
 
+round_percentage() {
+  awk -v value="$1" 'BEGIN {
+    if (value ~ /^[0-9]+([.][0-9]+)?$/) printf "%.0f", value
+  }'
+}
+
 usage=""
 hour=$(printf '%s' "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
 week=$(printf '%s' "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
@@ -115,6 +121,9 @@ if [ -z "$hour" ] && [ -z "$week" ] && [ -x "$script_dir/codex-rate-limits.py" ]
       | .[0].resetsAt // empty' 2>/dev/null)
   fi
 fi
+
+hour=$(round_percentage "$hour")
+week=$(round_percentage "$week")
 
 format_reset() {
   case "$1" in
