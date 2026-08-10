@@ -41,6 +41,23 @@ using `$HOME/.dotfiles/...` on the normal Mac checkout. A checkout outside
 copying a second version into a profile directory. Claude's status input is
 read from stdin; `jq`, `git`, and the standard shell tools are required.
 
+When ProxyCLI includes OpenAI rate limits in Claude's status payload, the
+renderer uses those values directly. Otherwise `codex-rate-limits.py` reads the
+same account through Codex app-server's read-only `account/rateLimits/read`
+method and stores a token-free, mode-0600 snapshot under
+`${XDG_CACHE_HOME:-$HOME/.cache}/dotphiles/codex-rate-limits.json`. Status-line
+renders only read that file; a stale or missing cache refreshes asynchronously
+at most once every five minutes, with failed reads retried no more than once a
+minute. Cached data disappears after fifteen minutes rather than presenting an
+old quota as current. The weekly segment shows percentage used and the local
+reset time. Set `CODEX_RATE_LIMIT_CACHE_TTL` to change the refresh interval,
+`CODEX_RATE_LIMIT_CACHE_MAX_AGE` to change the stale-data cutoff,
+`CODEX_RATE_LIMIT_RETRY_SECONDS` to change failure backoff,
+`CODEX_RATE_LIMIT_CACHE` to move the cache, or
+`CODEX_RATE_LIMIT_DISABLE_REFRESH=1` to disable live refreshes. A failed or
+unauthenticated refresh leaves the rest of the status line unchanged. This
+fallback also requires `python3` and the `codex` executable.
+
 Before this migration, OCD was the only profile with a status line. The normal
 Mac install enables the same shared renderer for default Claude, OCD, and ABCS;
 it doesn't copy any profile settings or account state between them.
