@@ -41,10 +41,12 @@ using `$HOME/.dotfiles/...` on the normal Mac checkout. A checkout outside
 copying a second version into a profile directory. Claude's status input is
 read from stdin; `jq`, `git`, and the standard shell tools are required.
 
-When ProxyCLI includes OpenAI rate limits in Claude's status payload, the
-renderer uses those values directly. Otherwise `codex-rate-limits.py` reads the
-same account through Codex app-server's read-only `account/rateLimits/read`
-method and stores a token-free, mode-0600 snapshot under
+Claude Code's inline rate limits belong to the Anthropic account, including
+when ProxyCLI routes the active model to OpenAI. The renderer labels those
+values `ANT` for native Anthropic models. For OpenAI/Codex/GPT models it ignores
+the inline values and `codex-rate-limits.py` reads the OpenAI account through
+Codex app-server's read-only `account/rateLimits/read` method. It stores a
+token-free, mode-0600 snapshot under
 `${XDG_CACHE_HOME:-$HOME/.cache}/dotphiles/codex-rate-limits.json`. Status-line
 renders only read that file; a stale or missing cache refreshes asynchronously
 at most once every five minutes, with failed reads retried no more than once a
