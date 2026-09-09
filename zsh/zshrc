@@ -3,6 +3,8 @@
 
 # Path to your oh-my-zsh installation.
 export ZSH=/home/chris/.oh-my-zsh
+# Never prompt for omz updates — the interactive prompt eats the first keystroke of herdr agent-start commands.
+zstyle ':omz:update' mode disabled
 
 # Set name of the theme to load. Optionally, if you set this to "random"
 # it'll load a random theme each time that oh-my-zsh is loaded.
@@ -55,6 +57,16 @@ ZSH_CUSTOM=$HOME/.dotfiles/zsh/custom
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(git docker docker-compose npm zsh-syntax-highlighting nvm zsh-completions zsh-autosuggestions extract dotnet gitignore)
+
+# herdr zsh completions: cache the generated file into fpath before compinit runs.
+if command -v herdr >/dev/null 2>&1; then
+  _herdr_comp_dir="$HOME/.cache/herdr/zsh"
+  if [[ ! -s "$_herdr_comp_dir/_herdr" || "$(command -v herdr)" -nt "$_herdr_comp_dir/_herdr" ]]; then
+    mkdir -p "$_herdr_comp_dir" && herdr completion zsh > "$_herdr_comp_dir/_herdr"
+  fi
+  fpath=("$_herdr_comp_dir" $fpath)
+  unset _herdr_comp_dir
+fi
 
 source $ZSH/oh-my-zsh.sh
 eval "$(starship init zsh)"
@@ -134,9 +146,14 @@ export PATH="$PATH:$HOME/.rvm/bin"
 # Local secrets (gitignored; see zsh/secrets.local)
 [ -f "$HOME/.dotfiles/zsh/secrets.local" ] && source "$HOME/.dotfiles/zsh/secrets.local"
 
-alias claude-ocd='CLAUDE_CONFIG_DIR=~/.claude-ocd /home/chris/.local/bin/claude'
-alias claude-abcs='CLAUDE_CONFIG_DIR=~/.claude-abcs /home/chris/.local/bin/claude'
-alias claude="echo 'Use specific commands: claude-ocd or claude-abcs'"
+# Multiple Claude Code accounts. Each uses its own config/auth dir via
+# CLAUDE_CONFIG_DIR. Launch each once and run `/login` to authenticate it.
+alias claude-ocd='CLAUDE_CONFIG_DIR="$HOME/.claude-ocd" command claude'
+alias claude-abcs='CLAUDE_CONFIG_DIR="$HOME/.claude-abcs" command claude'
+# Guard only when no account is chosen; herdr tabs export CLAUDE_CONFIG_DIR and get the real binary.
+if [[ -z "$CLAUDE_CONFIG_DIR" ]]; then
+  alias claude="echo 'Use specific commands: claude-ocd or claude-abcs'"
+fi
 
 # Reset terminal mouse tracking at each prompt. A program suspended with
 # Ctrl+Z cannot emit its disable sequence, which otherwise makes kitty send
