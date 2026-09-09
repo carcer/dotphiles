@@ -8,8 +8,14 @@ if [[ -z "$system_root" && $EUID -ne 0 ]]; then
   exit 1
 fi
 
+script_dir=$(cd "$(dirname "$0")" && pwd)
+# Host profile (values already exported by deploy/linux win over the file).
+# shellcheck source=hosts/load.sh
+source "$script_dir/hosts/load.sh"
+
 pam_dir="$system_root/etc/pam.d"
 limine_config="$system_root/boot/limine.conf"
+logind_dropin_dir="$system_root/etc/systemd/logind.conf.d"
 
 install_managed() {
   local mode=$1 source=$2 target=$3
@@ -118,7 +124,34 @@ configure_limine() {
   echo "Configured Limine for a one-second hidden menu (press any key to reveal it)"
 }
 
-for pam_service in sudo ly swaylock; do
-  enable_fingerprint_pam "$pam_service"
-done
+install_host_logind_dropins() {
+  local source_dir="$script_dir/hosts/$DOTPHILES_HOST/logind.conf.d"
+  local dropin
+
+  if [[ ! -d "$source_dir" ]]; then
+    echo "No logind drop-ins for $DOTPHILES_HOST"
+    return 0
+  fi
+
+  mkdir -p "$logind_dropin_dir"
+  for dropin in "$source_dir"/*.conf; do
+    [[ -f "$dropin" ]] || continue
+    install_managed 0644 "$dropin" "$logind_dropin_dir/$(basename "$dropin")"
+    echo "Installed logind drop-in $(basename "$dropin")"
+  done
+
+  if [[ -z "$system_root" ]] && command -v systemctl >/dev/null 2>&1; then
+    systemctl restart systemd-logind.service || \
+      echo "Could not restart systemd-logind; the drop-in applies at next boot" >&2
+  fi
+}
+
+if [[ "$DOTPHILES_FINGERPRINT" == 1 ]]; then
+  for pam_service in sudo ly swaylock; do
+    enable_fingerprint_pam "$pam_service"
+  done
+else
+  echo "Fingerprint PAM not enabled for $DOTPHILES_HOST (host profile)"
+fi
+install_host_logind_dropins
 configure_limine

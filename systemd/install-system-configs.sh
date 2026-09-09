@@ -26,6 +26,14 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
+# Host profile gates the Framework-only MediaTek workaround.
+# shellcheck source=../deploy/hosts/load.sh
+source "$SCRIPT_DIR/../deploy/hosts/load.sh"
+if [[ "$DOTPHILES_MT7925_BT" != 1 ]]; then
+    echo "MT7925 Bluetooth/Wi-Fi suspend workaround not enabled for $DOTPHILES_HOST (host profile); nothing to install."
+    exit 0
+fi
+
 mkdir -p "$BACKUP_DIR"
 
 install_file() {

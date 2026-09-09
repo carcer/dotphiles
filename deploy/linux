@@ -17,6 +17,10 @@ set -euo pipefail
 
 DIR=$(cd "$(dirname "$0")" && pwd)
 
+# Host profile: role, fingerprint, MT7925 workaround, herdr server, sshd.
+# shellcheck source=hosts/load.sh
+source "$DIR/hosts/load.sh"
+
 read_manifest() {
   local manifest=$1
   sed -e 's/[[:space:]]*#.*$//' -e '/^[[:space:]]*$/d' "$manifest"
@@ -58,7 +62,38 @@ fi
 "$DIR/install-herdr.sh"
 "$DIR/oh-my-zsh.sh"
 "$DIR/../statusline/install.sh"
-sudo "$DIR/configure-system.sh"
+
+# Codex: seed a config only on a fresh machine. Codex rewrites the live file
+# with per-directory trust and hook state, so it is never linked from the repo.
+if [[ ! -f "$HOME/.codex/config.toml" && -f "$DIR/../codex/config.seed.toml" ]]; then
+  mkdir -p "$HOME/.codex"
+  install -m 0644 "$DIR/../codex/config.seed.toml" "$HOME/.codex/config.toml"
+  echo "Seeded ~/.codex/config.toml from codex/config.seed.toml"
+fi
+
+# Sway: link this host's overrides where the shared config includes them.
+sway_host_conf="$DIR/../sway/hosts/$DOTPHILES_HOST.conf"
+if [[ -f "$sway_host_conf" ]]; then
+  ln -sfn "hosts/$DOTPHILES_HOST.conf" "$DIR/../sway/host.conf"
+else
+  [[ -e "$DIR/../sway/host.conf" ]] || : > "$DIR/../sway/host.conf"
+  echo "No sway host overrides for $DOTPHILES_HOST; using an empty host.conf" >&2
+fi
+
+sudo --preserve-env=DOTPHILES_HOST,DOTPHILES_ROLE,DOTPHILES_FINGERPRINT,DOTPHILES_MT7925_BT,DOTPHILES_HERDR_SERVER,DOTPHILES_SSHD \
+  "$DIR/configure-system.sh"
+
+# Host-role services. Enabling by path links the unit into the user manager
+# even before dotsync has created ~/.config/systemd/user/herdr-server.service.
+if [[ "$DOTPHILES_HERDR_SERVER" == 1 ]]; then
+  systemctl --user daemon-reload
+  systemctl --user enable --now "$DIR/../systemd/user/herdr-server.service"
+  echo "Enabled herdr-server user unit"
+fi
+if [[ "$DOTPHILES_SSHD" == 1 ]]; then
+  sudo systemctl enable --now sshd
+  echo "Enabled sshd"
+fi
 
 # sudo update-alternatives --install /usr/bin/vi vi /usr/bin/nvim 60
 # sudo update-alternatives --config vi

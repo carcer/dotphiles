@@ -1,0 +1,17 @@
+[Unit]
+Description=Herdr agent multiplexer server (headless)
+Documentation=https://herdr.dev
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# herdr.dev installs to ~/.local/bin (deploy/install-herdr.sh).
+ExecStart=%h/.local/bin/herdr server
+Restart=on-failure
+RestartSec=3
+# Lanes keep running unattended; give them time to flush on stop.
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target
