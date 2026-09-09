@@ -30,6 +30,7 @@ config/rofi:.config/rofi
 config/picom.conf:.config/picom.conf
 kitty:.config/kitty
 herdr/config.toml:.config/herdr/config.toml
+codex/rules:.codex/rules
 dotnetvm
 git/gitconfig
 git/gitignore
