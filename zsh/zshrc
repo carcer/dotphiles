@@ -57,6 +57,16 @@ ZSH_CUSTOM=$HOME/.dotfiles/zsh/custom
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(git docker docker-compose npm zsh-syntax-highlighting nvm zsh-completions zsh-autosuggestions extract dotnet gitignore)
 
+# herdr zsh completions: cache the generated file into fpath before compinit runs.
+if command -v herdr >/dev/null 2>&1; then
+  _herdr_comp_dir="$HOME/.cache/herdr/zsh"
+  if [[ ! -s "$_herdr_comp_dir/_herdr" || "$(command -v herdr)" -nt "$_herdr_comp_dir/_herdr" ]]; then
+    mkdir -p "$_herdr_comp_dir" && herdr completion zsh > "$_herdr_comp_dir/_herdr"
+  fi
+  fpath=("$_herdr_comp_dir" $fpath)
+  unset _herdr_comp_dir
+fi
+
 source $ZSH/oh-my-zsh.sh
 
 # User configuration

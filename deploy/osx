@@ -754,6 +754,13 @@ else
   echo "Status-line installer not found; skipping: $STATUSLINE_INSTALLER"
 fi
 
+HERDR_INSTALLER="$DIR/install-herdr.sh"
+if [[ -x "$HERDR_INSTALLER" ]]; then
+  "$HERDR_INSTALLER"
+else
+  echo "Herdr installer not found; skipping: $HERDR_INSTALLER"
+fi
+
 ###############################################################################
 # Kill affected applications                                                  #
 ###############################################################################
