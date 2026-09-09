@@ -35,6 +35,7 @@ config/fish/functions:.config/fish/functions
 config/gtk-3.0/settings.ini:.config/gtk-3.0/settings.ini
 config/gtk-4.0/settings.ini:.config/gtk-4.0/settings.ini
 kitty:.config/kitty
+herdr/config.toml:.config/herdr/config.toml
 pam.d
 dotnetvm
 git/gitconfig
