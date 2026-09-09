@@ -1,12 +1,13 @@
-# Sway configuration for the Framework laptop.
+# Shared Sway configuration for the CachyOS hosts on the master trunk.
 # i3 remains available as an X11 fallback in ~/.dotfiles/i3/config.
+# Per-host output, input and autostart lines live in sway/hosts/<hostname>.conf;
+# deploy/linux links the right one to ~/.config/sway/host.conf, included below.
 
 set $mod Mod4
 set $term kitty
 set $menu fuzzel
 
 output * bg ~/.dotfiles/bg.png fill
-output eDP-1 scale 2
 
 font pango:FiraCode Nerd Font Mono 11
 default_border pixel 1
@@ -17,14 +18,6 @@ workspace_auto_back_and_forth yes
 gaps inner 10
 gaps outer 0
 smart_gaps on
-
-# Framework touchpad defaults. Device-specific overrides can be added after
-# validating `swaymsg -t get_inputs` on the installed system.
-input type:touchpad {
-    tap enabled
-    natural_scroll disabled
-    dwt enabled
-}
 
 input type:keyboard {
     xkb_layout gb
@@ -50,6 +43,8 @@ bindsym $mod+Shift+Up move up
 bindsym $mod+Shift+Right move right
 
 bindsym $mod+Return exec $term
+# Terminal attached to the persistent Herdr session (agent lanes).
+bindsym $mod+Shift+Return exec $term --class herdr herdr
 bindsym $mod+Shift+q kill
 bindsym $mod+d exec $menu
 bindsym $mod+Shift+d exec $menu
@@ -123,6 +118,8 @@ assign [app_id="spotify"] $ws8
 assign [class="Spotify"] $ws8
 for_window [app_id="pavucontrol"] floating enable
 for_window [app_id="kitty"] border pixel 1
+for_window [app_id="herdr"] border pixel 1
+assign [app_id="herdr"] $ws2
 for_window [class="(?i)jetbrains-toolbox"] floating enable
 for_window [class="(?i)postman"] floating enable
 for_window [urgent=latest] focus
@@ -222,3 +219,7 @@ client.unfocused #282a36 #282a36 #bfbfbf #282a36 #073642
 client.urgent #282a36 #859900 #ffffff #859900 #859900
 client.placeholder #282a36 #282a36 #f8f8f2 #282a36 #282a36
 client.background #002b36
+
+# Host-specific outputs, inputs and autostart (see sway/hosts/). deploy/linux
+# links the matching file here; the untracked link is gitignored.
+include ~/.config/sway/host.conf
