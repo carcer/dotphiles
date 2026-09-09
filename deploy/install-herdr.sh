@@ -5,10 +5,14 @@ set -euo pipefail
 export PATH="$HOME/.local/bin:$PATH"
 
 if ! command -v herdr >/dev/null 2>&1; then
-  installer=$(mktemp "${TMPDIR:-/tmp}/herdr-install.XXXXXX")
-  trap 'rm -f -- "$installer"' EXIT
-  curl --fail --silent --show-error --location https://herdr.dev/install.sh --output "$installer"
-  sh "$installer"
+  if [[ "$OSTYPE" == darwin* ]] && command -v brew >/dev/null 2>&1; then
+    brew install herdr
+  else
+    installer=$(mktemp "${TMPDIR:-/tmp}/herdr-install.XXXXXX")
+    trap 'rm -f -- "$installer"' EXIT
+    curl --fail --silent --show-error --location https://herdr.dev/install.sh --output "$installer"
+    sh "$installer"
+  fi
   hash -r
 fi
 
