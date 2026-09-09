@@ -1,3 +1,7 @@
+# The following lines were added by Docker Desktop to add commands to your PATH.
+export PATH="$PATH:/Users/chris/.docker/bin"
+# End of Docker Desktop section.
+
 export QT_QPA_PLATFORMTHEME="qt5ct"
 export EDITOR=/usr/bin/nano
 export GTK2_RC_FILES="$HOME/.gtkrc-2.0"

@@ -3,6 +3,8 @@
 
 # Path to your oh-my-zsh installation.
 export ZSH=/Users/chris/.oh-my-zsh
+# Never prompt for omz updates — the interactive prompt eats the first keystroke of herdr agent-start commands.
+zstyle ':omz:update' mode disabled
 
 # Set name of the theme to load. Optionally, if you set this to "random"
 # it'll load a random theme each time that oh-my-zsh is loaded.
@@ -94,7 +96,10 @@ SPACESHIP_PROMPT_ADD_NEWLINE=false
 # CLAUDE_CONFIG_DIR. Launch each once and run `/login` to authenticate it.
 alias claude-ocd='CLAUDE_CONFIG_DIR="$HOME/.claude-ocd" command claude'
 alias claude-abcs='CLAUDE_CONFIG_DIR="$HOME/.claude-abcs" command claude'
-alias claude="echo 'Use specific commands: claude-ocd or claude-abcs'"
+# Guard only when no account is chosen; herdr tabs export CLAUDE_CONFIG_DIR and get the real binary.
+if [[ -z "$CLAUDE_CONFIG_DIR" ]]; then
+  alias claude="echo 'Use specific commands: claude-ocd or claude-abcs'"
+fi
 
 # Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
 export PATH="$PATH:$HOME/.rvm/bin"
