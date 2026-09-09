@@ -1,0 +1,114 @@
+#!/bin/sh
+# claude-move-profile — move a live Claude Code session between CLAUDE_CONFIG_DIR profiles.
+#
+# Copies a session transcript from one profile into another so the session can be
+# resumed there, keeping its full history. Does NOT start the session — it prints
+# the exact resume command to run in the pane.
+#
+# Usage:
+#   claude-move-profile <session-id> <cwd> [--from DIR] [--to DIR] [--force]
+#
+# Example:
+#   claude-move-profile 90513e6e-1437-40a9-b1e3-387c748dc8f6 \
+#     ~/development/projects/ambiguous-consent-estate/ambiguous-consent_design \
+#     --from ~/.claude-ocd --to ~/.claude-abcs
+#
+# IMPORTANT: exit the running claude process in the pane BEFORE running this.
+# The transcript is appended to live; copying it while claude is running can
+# capture a torn final line.
+#
+# Caveats this script cannot fix, and you must check yourself:
+#   * MCP servers are per-profile. The target profile may have different
+#     servers, different names, or need `/mcp` authentication. The resumed
+#     transcript will call the OLD tool names and those calls will fail.
+#   * Hooks are per-profile (settings.json + hooks/). Continuity auto-load and
+#     PreCompact auto-save live there. Port them before you move a lane.
+#   * The model default is per-profile. Set it with /model after resuming.
+
+set -eu
+
+usage() { sed -n '2,28p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-1}"; }
+
+SESSION=""
+CWD=""
+FROM="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+TO=""
+FORCE=0
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --from) FROM="$2"; shift 2 ;;
+    --to)   TO="$2";   shift 2 ;;
+    --force) FORCE=1;  shift ;;
+    -h|--help) usage 0 ;;
+    -*) echo "unknown option: $1" >&2; usage 1 ;;
+    *)
+      if [ -z "$SESSION" ]; then SESSION="$1"
+      elif [ -z "$CWD" ]; then CWD="$1"
+      else echo "unexpected argument: $1" >&2; usage 1
+      fi
+      shift ;;
+  esac
+done
+
+[ -n "$SESSION" ] || { echo "error: session-id required" >&2; usage 1; }
+[ -n "$CWD" ]     || { echo "error: cwd required" >&2; usage 1; }
+[ -n "$TO" ]      || { echo "error: --to required" >&2; usage 1; }
+
+# Expand ~ and resolve to an absolute, symlink-free path the same way Claude does.
+CWD_ABS=$(cd "$CWD" 2>/dev/null && pwd -P) || {
+  echo "error: cwd does not exist: $CWD" >&2; exit 1; }
+
+# Claude Code's project-dir slug: every '/' and '_' becomes '-'.
+SLUG=$(printf '%s' "$CWD_ABS" | tr '/_' '--')
+
+SRC="$FROM/projects/$SLUG/$SESSION.jsonl"
+DSTDIR="$TO/projects/$SLUG"
+DST="$DSTDIR/$SESSION.jsonl"
+
+[ -f "$SRC" ] || { echo "error: transcript not found: $SRC" >&2; exit 1; }
+
+if [ -f "$DST" ] && [ "$FORCE" -ne 1 ]; then
+  echo "error: destination already exists: $DST" >&2
+  echo "       re-run with --force to overwrite it" >&2
+  exit 1
+fi
+
+# Refuse to copy a transcript that a live claude process still holds open.
+if pgrep -f "claude --resume $SESSION" >/dev/null 2>&1; then
+  echo "error: a claude process is still resuming $SESSION" >&2
+  echo "       exit it in its pane first, or the copy may be torn" >&2
+  exit 1
+fi
+
+mkdir -p "$DSTDIR"
+# Note: this must be an if-block, not `[ -f ... ] && cp`. Under `set -e` a false
+# test as the last command of the list aborts the script before the copy runs —
+# which is exactly the first-move case, where the destination does not exist yet.
+if [ -f "$DST" ]; then
+  cp -p "$DST" "$DST.bak.$(date +%Y%m%d%H%M%S)"
+fi
+cp -p "$SRC" "$DST"
+
+SRC_LINES=$(wc -l <"$SRC" | tr -d ' ')
+DST_LINES=$(wc -l <"$DST" | tr -d ' ')
+SRC_BYTES=$(wc -c <"$SRC" | tr -d ' ')
+DST_BYTES=$(wc -c <"$DST" | tr -d ' ')
+
+if [ "$SRC_LINES" != "$DST_LINES" ] || [ "$SRC_BYTES" != "$DST_BYTES" ]; then
+  echo "error: copy mismatch — src ${SRC_LINES}L/${SRC_BYTES}B vs dst ${DST_LINES}L/${DST_BYTES}B" >&2
+  exit 1
+fi
+
+# A torn last line means the source was still being written.
+if ! tail -n 1 "$DST" | python3 -c 'import json,sys; json.loads(sys.stdin.read())' 2>/dev/null; then
+  echo "warning: last line of the copied transcript is not valid JSON." >&2
+  echo "         the source was probably still being appended to." >&2
+fi
+
+echo "copied  $SRC"
+echo "     -> $DST"
+echo "        ${DST_LINES} lines, ${DST_BYTES} bytes"
+echo
+echo "Resume it in the pane with:"
+echo "  cd $CWD_ABS && CLAUDE_CONFIG_DIR=$TO claude --resume $SESSION"
