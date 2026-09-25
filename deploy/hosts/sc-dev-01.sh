@@ -8,4 +8,4 @@ DOTPHILES_ROLE=host             # never idle-suspend; lanes run unattended
 DOTPHILES_FINGERPRINT=0         # no fingerprint reader in use
 DOTPHILES_MT7925_BT=0           # workaround not applicable
 DOTPHILES_HERDR_SERVER=1        # herdr-server user unit enabled at boot
-DOTPHILES_SSHD=1                # sshd enabled for the Mac
+DOTPHILES_SSHD=0                # sshd already enabled and hardened box-side by Andy
