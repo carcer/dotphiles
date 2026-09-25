@@ -17,6 +17,12 @@ unsetopt GLOBAL_RCS
 # Set the path to dotzsh.
 export DOTZSH="$HOME/.zsh"
 
+# User-local binaries (herdr, claude) for every shell, including the
+# non-interactive ones `ssh host cmd` and herdr's saved machines start.
+# zshrc prepends it again so interactive shells keep it first; -U dedupes.
+typeset -U path PATH
+path=("$HOME/.local/bin" $path)
+
 # Source environment settings
 #source "$DOTZSH/env.zsh"
 
