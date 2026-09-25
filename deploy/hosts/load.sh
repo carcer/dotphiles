@@ -11,6 +11,10 @@ DOTPHILES_FINGERPRINT=${DOTPHILES_FINGERPRINT:-0}
 DOTPHILES_MT7925_BT=${DOTPHILES_MT7925_BT:-0}
 DOTPHILES_HERDR_SERVER=${DOTPHILES_HERDR_SERVER:-0}
 DOTPHILES_SSHD=${DOTPHILES_SSHD:-0}
+# 0 on a machine someone else administers: deploy/linux then leaves packages,
+# npm globals and system config (PAM, bootloader, logind) alone and only sets
+# up this user.
+DOTPHILES_SYSTEM=${DOTPHILES_SYSTEM:-1}
 
 _dotphiles_hosts_dir=$(dirname "${BASH_SOURCE[0]}")
 DOTPHILES_HOST=${DOTPHILES_HOST:-$(hostname -s 2>/dev/null || hostname)}
@@ -25,5 +29,5 @@ else
 fi
 
 export DOTPHILES_HOST DOTPHILES_ROLE DOTPHILES_FINGERPRINT DOTPHILES_MT7925_BT \
-  DOTPHILES_HERDR_SERVER DOTPHILES_SSHD
+  DOTPHILES_HERDR_SERVER DOTPHILES_SSHD DOTPHILES_SYSTEM
 unset _dotphiles_hosts_dir _dotphiles_profile

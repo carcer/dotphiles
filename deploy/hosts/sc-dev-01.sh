@@ -3,8 +3,11 @@
 #
 # Role: remote herdr runner for Chris, reached from the Mac over Tailscale
 # (SSH and Herdr's saved-machine view). Runs as the dedicated `chris` user.
+# Andy administers the box (packages, sshd hardening, sleep masked, linger),
+# so deploy/linux only sets up the chris user here and never needs sudo.
 
-DOTPHILES_ROLE=host             # never idle-suspend; lanes run unattended
+DOTPHILES_ROLE=host             # lanes run unattended
+DOTPHILES_SYSTEM=0              # Andy owns packages and system config
 DOTPHILES_FINGERPRINT=0         # no fingerprint reader in use
 DOTPHILES_MT7925_BT=0           # workaround not applicable
 DOTPHILES_HERDR_SERVER=1        # herdr-server user unit enabled at boot

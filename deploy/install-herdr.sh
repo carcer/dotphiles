@@ -21,7 +21,12 @@ if ! command -v herdr >/dev/null 2>&1; then
   exit 1
 fi
 
-herdr integration install codex
+# herdr refuses the codex integration until Codex has created ~/.codex.
+if [[ -d "${CODEX_HOME:-$HOME/.codex}" ]]; then
+  herdr integration install codex
+else
+  echo "Skipping herdr's codex integration: install Codex, then rerun this script" >&2
+fi
 
 if command -v claude >/dev/null 2>&1; then
   for profile in ocd abcs; do

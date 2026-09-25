@@ -17,7 +17,7 @@ set -euo pipefail
 
 DIR=$(cd "$(dirname "$0")" && pwd)
 
-# Host profile: role, fingerprint, MT7925 workaround, herdr server, sshd.
+# Host profile: role, fingerprint, MT7925 workaround, herdr server, sshd, system.
 # shellcheck source=hosts/load.sh
 source "$DIR/hosts/load.sh"
 
@@ -44,21 +44,28 @@ if [[ "${ID:-}" != cachyos && "${ID:-}" != arch && "${ID:-}" != manjaro ]]; then
   exit 1
 fi
 
-sudo pacman -Syu --noconfirm
-install_manifest "$DIR/packages/arch-repo" sudo pacman
+# Packages are this machine's business only when we administer it; with
+# DOTPHILES_SYSTEM=0 the owner manages them and nothing here needs sudo.
+if [[ "$DOTPHILES_SYSTEM" == 1 ]]; then
+  sudo pacman -Syu --noconfirm
+  install_manifest "$DIR/packages/arch-repo" sudo pacman
 
-if [[ -s "$DIR/packages/arch-aur" ]]; then
-  if ! command -v yay >/dev/null 2>&1; then
-    sudo pacman -S --needed --noconfirm base-devel git
-    build_dir=$(mktemp -d "${TMPDIR:-/tmp}/dotphiles-yay.XXXXXX")
-    trap 'rm -rf -- "$build_dir"' EXIT
-    git clone https://aur.archlinux.org/yay-bin.git "$build_dir/yay-bin"
-    (cd "$build_dir/yay-bin" && makepkg -si --needed --noconfirm)
+  if [[ -s "$DIR/packages/arch-aur" ]]; then
+    if ! command -v yay >/dev/null 2>&1; then
+      sudo pacman -S --needed --noconfirm base-devel git
+      build_dir=$(mktemp -d "${TMPDIR:-/tmp}/dotphiles-yay.XXXXXX")
+      trap 'rm -rf -- "$build_dir"' EXIT
+      git clone https://aur.archlinux.org/yay-bin.git "$build_dir/yay-bin"
+      (cd "$build_dir/yay-bin" && makepkg -si --needed --noconfirm)
+    fi
+    install_manifest "$DIR/packages/arch-aur" yay
   fi
-  install_manifest "$DIR/packages/arch-aur" yay
+
+  "$DIR/install-npm-globals.sh"
+else
+  echo "DOTPHILES_SYSTEM=0: skipping packages and npm globals (owner-managed)"
 fi
 
-"$DIR/install-npm-globals.sh"
 "$DIR/install-herdr.sh"
 "$DIR/oh-my-zsh.sh"
 "$DIR/../statusline/install.sh"
@@ -71,17 +78,21 @@ if [[ ! -f "$HOME/.codex/config.toml" && -f "$DIR/../codex/config.seed.toml" ]];
   echo "Seeded ~/.codex/config.toml from codex/config.seed.toml"
 fi
 
-# Sway: link this host's overrides where the shared config includes them.
-sway_host_conf="$DIR/../sway/hosts/$DOTPHILES_HOST.conf"
-if [[ -f "$sway_host_conf" ]]; then
-  ln -sfn "hosts/$DOTPHILES_HOST.conf" "$DIR/../sway/host.conf"
-else
-  [[ -e "$DIR/../sway/host.conf" ]] || : > "$DIR/../sway/host.conf"
-  echo "No sway host overrides for $DOTPHILES_HOST; using an empty host.conf" >&2
-fi
+if [[ "$DOTPHILES_SYSTEM" == 1 ]]; then
+  # Sway: link this host's overrides where the shared config includes them.
+  sway_host_conf="$DIR/../sway/hosts/$DOTPHILES_HOST.conf"
+  if [[ -f "$sway_host_conf" ]]; then
+    ln -sfn "hosts/$DOTPHILES_HOST.conf" "$DIR/../sway/host.conf"
+  else
+    [[ -e "$DIR/../sway/host.conf" ]] || : > "$DIR/../sway/host.conf"
+    echo "No sway host overrides for $DOTPHILES_HOST; using an empty host.conf" >&2
+  fi
 
-sudo --preserve-env=DOTPHILES_HOST,DOTPHILES_ROLE,DOTPHILES_FINGERPRINT,DOTPHILES_MT7925_BT,DOTPHILES_HERDR_SERVER,DOTPHILES_SSHD \
-  "$DIR/configure-system.sh"
+  sudo --preserve-env=DOTPHILES_HOST,DOTPHILES_ROLE,DOTPHILES_FINGERPRINT,DOTPHILES_MT7925_BT,DOTPHILES_HERDR_SERVER,DOTPHILES_SSHD \
+    "$DIR/configure-system.sh"
+else
+  echo "DOTPHILES_SYSTEM=0: skipping sway host config and configure-system.sh"
+fi
 
 # Host-role services. Enabling by path links the unit into the user manager
 # even before dotsync has created ~/.config/systemd/user/herdr-server.service.
@@ -89,6 +100,10 @@ if [[ "$DOTPHILES_HERDR_SERVER" == 1 ]]; then
   systemctl --user daemon-reload
   systemctl --user enable --now "$DIR/../systemd/user/herdr-server.service"
   echo "Enabled herdr-server user unit"
+  # Without linger the user manager, and herdr-server with it, stops at logout.
+  if [[ "$(loginctl show-user "$USER" -p Linger --value 2>/dev/null)" != yes ]]; then
+    echo "Linger is off: herdr-server stops at logout. Run: sudo loginctl enable-linger $USER" >&2
+  fi
 fi
 if [[ "$DOTPHILES_SSHD" == 1 ]]; then
   sudo systemctl enable --now sshd
