@@ -42,6 +42,10 @@ if [[ "$OSTYPE" == linux* ]]; then
   [[ -z "${LC_ALL:-}" ]] && export LANG=en_GB.UTF-8 LC_ALL=en_GB.UTF-8
 fi
 
+# sc-dev-01 only: two concurrent dotnet build/test lock slots for the estates
+# that share the box (sechroom PR #3240's opt-in slot protocol).
+[[ "${HOST%%.*}" == sc-dev-01 ]] && export DPT_DOTNET_SLOTS="${DPT_DOTNET_SLOTS:-2}"
+
 # nvm's default Node for non-interactive shells (ssh host cmd, herdr panes),
 # so node/npm globals (sechroom, codex, pnpm) resolve without sourcing the
 # slow nvm.sh. Interactive shells still load nvm itself via the zshrc plugin.
