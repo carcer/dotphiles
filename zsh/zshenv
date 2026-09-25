@@ -33,6 +33,15 @@ fi
 [[ -d "$HOME/.cargo/bin" ]] && path=("$HOME/.cargo/bin" $path)
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 
+# Linux shells that skip /etc/profile (GLOBAL_RCS is unset above, and `ssh host
+# cmd` is neither login nor interactive) miss what Arch puts there: the perl
+# tool dirs (shasum lives in core_perl) and /etc/locale.conf. Without a locale
+# they run as POSIX, which breaks locale-sensitive dotnet tests.
+if [[ "$OSTYPE" == linux* ]]; then
+  [[ -d /usr/bin/core_perl ]] && path+=(/usr/bin/core_perl)
+  [[ -z "${LC_ALL:-}" ]] && export LANG=en_GB.UTF-8 LC_ALL=en_GB.UTF-8
+fi
+
 # nvm's default Node for non-interactive shells (ssh host cmd, herdr panes),
 # so node/npm globals (sechroom, codex, pnpm) resolve without sourcing the
 # slow nvm.sh. Interactive shells still load nvm itself via the zshrc plugin.
