@@ -121,6 +121,7 @@ chris-xps159500                  git=master
 sc-dev-01                        git=master
 chris-virtualbox                 git=ANY
 #host1.example.com               git=ANY                        files=custom/dotfile    #git repo, pull from anywhere and link a custom dotfile
+#host1a.example.com              git=ANY                        files=!ssh              #git repo, pull from anywhere, skip the ssh entry for this host
 #host2.example.com               git=ANY                                                #git repo, pull from anywhere
 #host3.example.com               git=ANY                                                #git repo, pull from anywhere
 #host4.example.com               git=host5.example.com                                  #git repo, pull from host5

@@ -242,11 +242,38 @@ getfiles() {
   local host_files
   host_files=$(echo "${hosts_section}" | grep -E "${host_pattern}" | awk '{print $3}' | cut -d'=' -f2 | tr ',' '\n' || true)
   
+  # A leading "!" excludes an entry for this host (files=!ssh drops the "ssh"
+  # line); it matches either the whole entry or its source before the colon.
+  local -a excludes=()
   while IFS= read -r line; do
     [[ -z "${line}" ]] && continue
-    SRCFILES_ARRAY+=("${line}")
+    if [[ "${line}" == \!* ]]; then
+      excludes+=("${line#!}")
+    else
+      SRCFILES_ARRAY+=("${line}")
+    fi
   done <<< "${host_files}"
-  
+
+  if ((${#excludes[@]})); then
+    local -a kept=()
+    local entry exclude skip
+    for entry in "${SRCFILES_ARRAY[@]}"; do
+      skip=0
+      for exclude in "${excludes[@]}"; do
+        if [[ "${entry}" == "${exclude}" || "${entry%%:*}" == "${exclude}" ]]; then
+          skip=1
+          break
+        fi
+      done
+      if ((skip)); then
+        log_debug "Excluded ${entry} for this host"
+      else
+        kept+=("${entry}")
+      fi
+    done
+    SRCFILES_ARRAY=("${kept[@]}")
+  fi
+
   if ((${#SRCFILES_ARRAY[@]} == 0)); then
     log_error "No dotfiles found in ${CONFIG}, add some"
     exit 1
