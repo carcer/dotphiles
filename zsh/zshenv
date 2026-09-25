@@ -33,6 +33,15 @@ fi
 [[ -d "$HOME/.cargo/bin" ]] && path=("$HOME/.cargo/bin" $path)
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 
+# Rootless Docker on Linux (sc-dev-01): point clients, including the .NET
+# Testcontainers suites, at the user daemon when its socket exists. Hosts on
+# the system daemon have no user socket and keep the default.
+if [[ "$OSTYPE" == linux* && -z "${DOCKER_HOST:-}" ]]; then
+  _docker_sock="${XDG_RUNTIME_DIR:-/run/user/$UID}/docker.sock"
+  [[ -S "$_docker_sock" ]] && export DOCKER_HOST="unix://$_docker_sock"
+  unset _docker_sock
+fi
+
 # Source environment settings
 #source "$DOTZSH/env.zsh"
 
