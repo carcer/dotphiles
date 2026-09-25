@@ -1,0 +1,8 @@
+# Global npm tools nvm installs into every new Node version (nvm install).
+# Linked to ~/.nvm/default-packages by dotsync. One package per line.
+# claude is the native install in ~/.local/bin, so claude-code is not listed.
+@openai/codex
+@sechroom/cli
+@mermaid-js/mermaid-cli
+@playwright/mcp
+turbo
