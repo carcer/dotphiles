@@ -23,6 +23,16 @@ export DOTZSH="$HOME/.zsh"
 typeset -U path PATH
 path=("$HOME/.local/bin" $path)
 
+# User-level toolchains, when installed: the .NET SDK from dotnet-install.sh
+# and Rust from rustup (installed with --no-modify-path, so it is wired here).
+if [[ -x "$HOME/.dotnet/dotnet" ]]; then
+  export DOTNET_ROOT="$HOME/.dotnet"
+  path=("$HOME/.dotnet" $path)
+fi
+[[ -d "$HOME/.dotnet/tools" ]] && path=("$HOME/.dotnet/tools" $path)
+[[ -d "$HOME/.cargo/bin" ]] && path=("$HOME/.cargo/bin" $path)
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
+
 # Source environment settings
 #source "$DOTZSH/env.zsh"
 
