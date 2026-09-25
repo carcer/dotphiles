@@ -5,6 +5,12 @@ Host git.ocd.codes
   HostName github.com
   User git
   IdentityFile ~/.ssh/master/ocd
+  # Keepalives: the pre-push gate holds this connection idle for minutes while it
+  # runs lint, builds and vitest, and GitHub closes it before git sends the push
+  # body (SIGPIPE, exit 141). Without these, ServerAliveInterval resolves to 0.
+  # 30s x 20 = 10 min of tolerated silence. DLA-1507.
+  ServerAliveInterval 30
+  ServerAliveCountMax 20
 
 Host irregular-apocalypse
   ServerAliveInterval 60
