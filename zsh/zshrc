@@ -106,10 +106,19 @@ SPACESHIP_PROMPT_ADD_NEWLINE=false
 # CLAUDE_CONFIG_DIR. Launch each once and run `/login` to authenticate it.
 alias claude-ocd='CLAUDE_CONFIG_DIR="$HOME/.claude-ocd" command claude'
 alias claude-abcs='CLAUDE_CONFIG_DIR="$HOME/.claude-abcs" command claude'
-# Guard only when no account is chosen; herdr tabs export CLAUDE_CONFIG_DIR and get the real binary.
-if [[ -z "$CLAUDE_CONFIG_DIR" ]]; then
-  alias claude="echo 'Use specific commands: claude-ocd or claude-abcs'"
-fi
+# Bare `claude` defaults to the ocd account so agents that forget the suffix
+# still start. The notice goes to stderr to keep `claude -p` output clean. When
+# an account is already chosen (herdr tabs export CLAUDE_CONFIG_DIR), it passes
+# straight through.
+unalias claude 2>/dev/null
+claude() {
+  if [[ -z "$CLAUDE_CONFIG_DIR" ]]; then
+    print -u2 "claude: no account chosen, starting claude-ocd (~/.claude-ocd). Use claude-abcs for ABCS."
+    CLAUDE_CONFIG_DIR="$HOME/.claude-ocd" command claude "$@"
+  else
+    command claude "$@"
+  fi
+}
 
 # Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
 export PATH="$PATH:$HOME/.rvm/bin"
