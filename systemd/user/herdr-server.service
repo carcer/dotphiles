@@ -6,8 +6,12 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-# herdr.dev installs to ~/.local/bin (deploy/install-herdr.sh).
-ExecStart=%h/.local/bin/herdr server
+# herdr.dev installs to ~/.local/bin (deploy/install-herdr.sh). Start through
+# zsh so zshenv sets PATH (~/.local/bin ahead of the distro's /usr/bin/claude,
+# nvm, dotnet) and the estate env (DOCKER_HOST, locale, DPT slots). Processes
+# herdr launches without a shell, such as agents, inherit it; systemd's own PATH
+# is only /usr/local/bin:/usr/bin. exec keeps herdr as the unit's main process.
+ExecStart=/usr/bin/zsh -c 'exec "$HOME/.local/bin/herdr" server'
 Restart=on-failure
 RestartSec=3
 # Lanes keep running unattended; give them time to flush on stop.
