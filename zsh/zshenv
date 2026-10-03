@@ -42,11 +42,12 @@ if [[ "$OSTYPE" == linux* ]]; then
   [[ -z "${LC_ALL:-}" ]] && export LANG=en_GB.UTF-8 LC_ALL=en_GB.UTF-8
 fi
 
-# sc-dev-01 only: lock slots for the estates that share the box. Two heavy
-# dotnet-test slots (sechroom #3240) and two light dotnet-build/codegen slots
-# (#3285). Two test slots already peak near the 44G soft cap, so builds stay
-# at 2 until a measured build/codegen peak justifies more.
-[[ "${HOST%%.*}" == sc-dev-01 ]] && export DPT_DOTNET_SLOTS="${DPT_DOTNET_SLOTS:-2}"
+# sc-dev-01 only: lock slots for the estates that share the box. Three heavy
+# dotnet-test slots (sechroom #3240; raised from 2 on 2026-10-03 as a trial,
+# "keep 3 open and see how things go") and two light dotnet-build/codegen slots
+# (#3285). Watch ~/estate-metrics/box-usage.csv: in Sept, 3 test slots hit the
+# 44G soft cap in ~57% of samples vs ~10% at 2. Drop back to 2 if it thrashes.
+[[ "${HOST%%.*}" == sc-dev-01 ]] && export DPT_DOTNET_SLOTS="${DPT_DOTNET_SLOTS:-3}"
 [[ "${HOST%%.*}" == sc-dev-01 ]] && export DPT_DOTNET_BUILD_SLOTS="${DPT_DOTNET_BUILD_SLOTS:-2}"
 
 # nvm's default Node for non-interactive shells (ssh host cmd, herdr panes),
