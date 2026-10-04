@@ -6,14 +6,8 @@
 # Simple clear command.
 alias cl='clear'
 
-# Disable sertificate check for wget.
-alias wget='wget --no-check-certificate'
-
 # JSHint short-cut.
 alias lint=eslint
-
-# Faster NPM for europeans.
-alias npme='npm --registry http://registry.npmjs.eu'
 
 # Some OS X-only stuff.
 if [[ "$OSTYPE" == darwin* ]]; then
@@ -23,25 +17,6 @@ if [[ "$OSTYPE" == darwin* ]]; then
 
   # Remove all items safely, to Trash (`brew install trash`).
 #  alias rm='trash'
-
-  # Case-insensitive pgrep that outputs full path.
-  alias pgrep='pgrep -fli'
-
-  # Lock current session and proceed to the login screen.
-  alias lock='/System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resources/CGSession -suspend'
-
-  # Sniff network info.
-  alias sniff="sudo ngrep -d 'en1' -t '^(GET|POST) ' 'tcp and port 80'"
-
-  # Developer tools shortcuts.
-  alias tower='gittower .'
-  alias t='gittower .'
-
-  # Process grep should output full paths to binaries.
-  alias pgrep='pgrep -fli'
-else
-  # Process grep should output full paths to binaries.
-  alias pgrep='pgrep -fl'
 fi
 
 # Git short-cuts.
@@ -52,10 +27,6 @@ alias gr='git rm'
 alias gf='git fetch'
 alias gu='git pull'
 alias gup='git pull && git push'
-alias ghu='git pull hy'
-alias ghp='git push hy'
-
-alias gflf='git flow feature'
 
 alias gs='git status --short'
 alias gd='git diff'
@@ -90,15 +61,6 @@ alias gbr='git branch'
 alias gbrcl='git checkout --orphan'
 alias gbrd='git branch -D'
 alias gl='git log --no-merges'
-
-# Docker
-function bdmachine() {
-  docker-machine start default
-  docker-machine env default
-  eval "$(docker-machine env default)"
-}
-
-alias dm='docker-machine'
 
 # Dev short-cuts.
 alias nr='npm run'
