@@ -60,7 +60,7 @@ CWD_ABS=$(cd "$CWD" 2>/dev/null && pwd -P) || {
   echo "error: cwd does not exist: $CWD" >&2; exit 1; }
 
 # Claude Code's project-dir slug: every '/' and '_' becomes '-'.
-SLUG=$(printf '%s' "$CWD_ABS" | tr '/_' '--')
+SLUG=$(printf '%s' "$CWD_ABS" | sed 's/[^A-Za-z0-9]/-/g')   # Claude Code maps every non-alphanumeric to -
 
 SRC="$FROM/projects/$SLUG/$SESSION.jsonl"
 DSTDIR="$TO/projects/$SLUG"
