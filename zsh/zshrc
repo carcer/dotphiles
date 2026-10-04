@@ -106,18 +106,45 @@ SPACESHIP_PROMPT_ADD_NEWLINE=false
 # CLAUDE_CONFIG_DIR. Launch each once and run `/login` to authenticate it.
 alias claude-ocd='CLAUDE_CONFIG_DIR="$HOME/.claude-ocd" command claude'
 alias claude-abcs='CLAUDE_CONFIG_DIR="$HOME/.claude-abcs" command claude'
-# Bare `claude` defaults to the ocd account so agents that forget the suffix
-# still start. The notice goes to stderr to keep `claude -p` output clean. When
-# an account is already chosen (herdr tabs export CLAUDE_CONFIG_DIR), it passes
-# straight through.
+# Bare `claude` (no CLAUDE_CONFIG_DIR) picks the account itself, so agents that
+# forget the suffix still start and herdr's auto-resume, which relaunches
+# `claude --resume <id>` without the pane's CLAUDE_CONFIG_DIR, lands each lane
+# back in its own account:
+#   1. --resume/-r <id>: the account holding the newest transcript for that
+#      session (copy-todays-transcripts can leave an older copy in another one);
+#   2. otherwise by directory: ABCS checkouts get abcs, everything else ocd.
+# The notice goes to stderr to keep `claude -p` output clean. When an account is
+# already chosen (herdr tabs export CLAUDE_CONFIG_DIR), it passes straight through.
 unalias claude 2>/dev/null
 claude() {
-  if [[ -z "$CLAUDE_CONFIG_DIR" ]]; then
-    print -u2 "claude: no account chosen, starting claude-ocd (~/.claude-ocd). Use claude-abcs for ABCS."
-    CLAUDE_CONFIG_DIR="$HOME/.claude-ocd" command claude "$@"
-  else
+  if [[ -n "$CLAUDE_CONFIG_DIR" ]]; then
     command claude "$@"
+    return
   fi
+  local account="" why="" id="" arg prev="" newest
+  for arg in "$@"; do
+    case "$prev:$arg" in
+      --resume:*|-r:*) id=$arg ;;
+      *:--resume=*) id=${arg#--resume=} ;;
+    esac
+    prev=$arg
+  done
+  if [[ $id == ????????-????-????-????-???????????? ]]; then
+    newest=( "$HOME"/.claude-(ocd|abcs)/projects/*/"$id".jsonl(N.om[1]) )
+    if (( $#newest )); then
+      account=${${newest[1]#$HOME/.claude-}%%/*}
+      why="session $id"
+    fi
+  fi
+  if [[ -z $account ]]; then
+    account=ocd
+    case "$PWD/" in
+      "$HOME"/development/projects/abcs/*) account=abcs ;;
+    esac
+    why=$PWD
+  fi
+  print -u2 "claude: no account chosen, starting claude-$account (~/.claude-$account) for $why."
+  CLAUDE_CONFIG_DIR="$HOME/.claude-$account" command claude "$@"
 }
 
 # Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
