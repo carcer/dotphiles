@@ -228,8 +228,12 @@ def patch_claude_settings(path, command, dry_run):
         status["command"] = command
         if "padding" not in status:
             status["padding"] = 0
+        # Re-run the command every 30s so the prompt-cache countdown stays live
+        # between turns; an existing value is the user's choice and is kept.
+        if "refreshInterval" not in status:
+            status["refreshInterval"] = 30
     else:
-        status = {"type": "command", "command": command, "padding": 0}
+        status = {"type": "command", "command": command, "padding": 0, "refreshInterval": 30}
     after["statusLine"] = status
 
     if after == before:
