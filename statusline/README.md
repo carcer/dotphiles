@@ -19,10 +19,19 @@ The installer updates only these fields:
   `[tui].status_line_use_colors`
 - `~/.claude/settings.json`, `~/.claude-ocd/settings.json`, and
   `~/.claude-abcs/settings.json`: `statusLine.type`, `statusLine.command`, and
-  `statusLine.padding` when that field is missing
+  `statusLine.padding` and `statusLine.refreshInterval` (30 seconds) when those
+  fields are missing
+
+`claude-statusline.sh` prints a second line with the prompt-cache state from
+`claude-cache-segment.sh`: warm with a TTL countdown bar, hit rate and misses,
+or cold with the tokens the next message will re-cache. The 30-second refresh
+keeps the countdown moving between turns. It needs Claude Code 2.1.251 or
+later; older versions send no `prompt_cache` and the line is omitted. Codex has
+no equivalent hook (`[tui].status_line` only takes built-in items).
 
 Other JSON values and TOML lines are left in place; the installer replaces only
-the selected field values. Existing Claude `padding` values are kept. A
+the selected field values. Existing Claude `padding` and `refreshInterval`
+values are kept. A
 profile directory that doesn't exist is skipped; an existing profile directory
 gets a minimal `settings.json` when that profile is selected. Set
 `CODEX_HOME`, `CLAUDE_HOME`, `CLAUDE_OCD_HOME`, or `CLAUDE_ABCS_HOME` when a

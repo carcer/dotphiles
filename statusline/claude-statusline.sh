@@ -171,3 +171,9 @@ line="${loc}${sep}${edited} 📝 ${new} 🆕${sep}${tok_icon} ${tok_k} (${pct:-0
 [ -n "$usage" ] && line="${line}${sep}${usage}"
 line="${line}${sep}🤖 ${model}"
 printf '%s' "$line"
+
+# Prompt-cache state on its own line (Claude Code 2.1.251+ sends prompt_cache;
+# older versions and sessions without caching print nothing extra).
+cache=$(printf '%s' "$input" | bash "$script_dir/claude-cache-segment.sh" 2>/dev/null)
+[ -n "$cache" ] && printf '\n%s' "$cache"
+exit 0

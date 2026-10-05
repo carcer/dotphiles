@@ -45,6 +45,7 @@ cat > "$fixture/ocd-real/settings.json" <<'EOF'
     "type": "old",
     "command": "old-command",
     "padding": 4,
+    "refreshInterval": 10,
     "keep": "this field"
   },
   "theme": "dark"
@@ -153,15 +154,18 @@ claude = json.loads((root / "claude/settings.json").read_text())
 assert claude["hooks"] == {"SessionStart": ["keep this hook"]}
 assert claude["model"] == "opus"
 assert claude["statusLine"]["type"] == "command"
+assert claude["statusLine"]["refreshInterval"] == 30
 
 ocd = json.loads((root / "ocd/settings.json").read_text())
 assert ocd["model"] == "fable"
 assert ocd["theme"] == "dark"
 assert ocd["statusLine"]["padding"] == 4
+assert ocd["statusLine"]["refreshInterval"] == 10
 assert ocd["statusLine"]["keep"] == "this field"
 
 abcs = json.loads((root / "abcs/settings.json").read_text())
 assert abcs["statusLine"]["type"] == "command"
+assert abcs["statusLine"]["refreshInterval"] == 30
 assert stat.S_IMODE((root / "ocd-real/settings.json").stat().st_mode) == 0o640
 assert stat.S_IMODE((root / "ocd-real/settings.json.dotphiles-original").stat().st_mode) == 0o640
 PY
