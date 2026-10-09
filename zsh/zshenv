@@ -50,26 +50,40 @@ fi
 [[ "${HOST%%.*}" == sc-dev-01 ]] && export DPT_DOTNET_SLOTS="${DPT_DOTNET_SLOTS:-3}"
 [[ "${HOST%%.*}" == sc-dev-01 ]] && export DPT_DOTNET_BUILD_SLOTS="${DPT_DOTNET_BUILD_SLOTS:-2}"
 
-# sc-dev-01 only: keep Freedivr temp off /tmp, a 32G tmpfs that filled on
-# 2026-10-08 and blocked the test lock (DLA-1997). The lock root is one path
-# shared by every lane. TMPDIR and Claude Code's temp root are per lane, keyed
-# by the checkout the herdr pane starts in (didactic-palm-tree_<lane> or
-# review/<lane>). Shells started later inside a lane inherit them unchanged.
+# sc-dev-01 only: keep estate temp off /tmp, a 32G tmpfs that filled on
+# 2026-10-08 and blocked the shared test lock. DPT_LOCK_ROOT is one path for
+# every estate; the lock scripts adopt it together or not at all, since
+# sechroom, abcs and Freedivr share the dotnet slots (DLA-1997). TMPDIR and
+# Claude Code's temp root are per lane, keyed <estate>-<lane> by the checkout
+# the herdr pane starts in: <prefix>_<lane>, review/<lane> or conductor.
+# Shells started later inside a lane inherit them unchanged. bin/dpt-tmp-prune
+# clears what goes stale.
 if [[ "${HOST%%.*}" == sc-dev-01 ]]; then
   export DPT_LOCK_ROOT="${DPT_LOCK_ROOT:-$HOME/.cache/dpt-locks}"
   [[ -d "$DPT_LOCK_ROOT" ]] || mkdir -p "$DPT_LOCK_ROOT"
-  _dpt_estate="$HOME/development/projects/didactic-palm-tree-estate"
   _dpt_lane=""
-  case "$PWD/" in
-    ("$_dpt_estate"/didactic-palm-tree_*/*) _dpt_lane=${${PWD#$_dpt_estate/didactic-palm-tree_}%%/*} ;;
-    ("$_dpt_estate"/review/*/*) _dpt_lane=review-${${PWD#$_dpt_estate/review/}%%/*} ;;
-  esac
+  # <estate dir>/<checkout prefix>:<key>
+  for _dpt_spec in \
+    didactic-palm-tree-estate/didactic-palm-tree_:freedivr \
+    ambiguous-consent-estate/ambiguous-consent_:ac \
+    abcs/bookgusto_:abcs \
+    sechroom-estate/sechroom_:sechroom; do
+    _dpt_prefix="$HOME/development/projects/${_dpt_spec%:*}"
+    _dpt_estate=${_dpt_prefix%/*}
+    _dpt_key=${_dpt_spec##*:}
+    case "$PWD/" in
+      ("$_dpt_prefix"*/*) _dpt_lane=$_dpt_key-${${PWD#$_dpt_prefix}%%/*} ;;
+      ("$_dpt_estate"/review/*/*) _dpt_lane=$_dpt_key-review-${${PWD#$_dpt_estate/review/}%%/*} ;;
+      ("$_dpt_estate"/conductor/*) _dpt_lane=$_dpt_key-conductor ;;
+    esac
+    [[ -n "$_dpt_lane" ]] && break
+  done
   if [[ -n "$_dpt_lane" && "${TMPDIR:-}" != "$HOME/.cache/dpt-tmp/"* ]]; then
     export TMPDIR="$HOME/.cache/dpt-tmp/$_dpt_lane"
     export CLAUDE_CODE_TMPDIR="$TMPDIR/claude"
     [[ -d "$CLAUDE_CODE_TMPDIR" ]] || mkdir -p -m 700 "$TMPDIR" "$CLAUDE_CODE_TMPDIR"
   fi
-  unset _dpt_estate _dpt_lane
+  unset _dpt_spec _dpt_prefix _dpt_estate _dpt_key _dpt_lane
 fi
 
 # nvm's default Node for non-interactive shells (ssh host cmd, herdr panes),

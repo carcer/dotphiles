@@ -1,5 +1,5 @@
 [Unit]
-Description=Prune stale Freedivr lane temp every six hours
+Description=Prune stale estate lane temp every six hours
 
 [Timer]
 OnCalendar=*-*-* 00/6:00:00

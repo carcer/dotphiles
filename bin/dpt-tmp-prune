@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Prune stale Freedivr lane temp under ~/.cache/dpt-tmp on sc-dev-01.
+# Prune stale estate lane temp under ~/.cache/dpt-tmp on sc-dev-01.
 #
-# zshenv points each Freedivr lane's TMPDIR at ~/.cache/dpt-tmp/<lane> and
+# zshenv points each estate lane's TMPDIR at ~/.cache/dpt-tmp/<estate>-<lane> and
 # CLAUDE_CODE_TMPDIR at <lane>/claude. Unlike the /tmp tmpfs they replaced,
 # nothing caps or clears them, and they share /home with everything else.
 #

@@ -12,4 +12,4 @@ DOTPHILES_FINGERPRINT=0         # no fingerprint reader in use
 DOTPHILES_MT7925_BT=0           # workaround not applicable
 DOTPHILES_HERDR_SERVER=1        # herdr-server user unit enabled at boot
 DOTPHILES_SSHD=0                # sshd already enabled and hardened box-side by Andy
-DOTPHILES_DPT_TMP_PRUNE=1       # prune Freedivr lane temp in ~/.cache/dpt-tmp
+DOTPHILES_DPT_TMP_PRUNE=1       # prune estate lane temp in ~/.cache/dpt-tmp
