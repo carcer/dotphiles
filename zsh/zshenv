@@ -61,7 +61,11 @@ if [[ "${HOST%%.*}" == sc-dev-01 ]]; then
   # lock root, so it moves only once all three lock scripts read
   # DPT_LOCK_ROOT (DLA-1997). Until then an estate that saw it set would lock
   # apart from the others, so clear what panes started 2026-10-10 inherited.
-  # Cutover: export DPT_LOCK_ROOT="$HOME/.cache/dpt-locks" here.
+  # Cutover: export DPT_LOCK_ROOT=/run/user/$UID/dpt-locks here, creating it.
+  # The root must be wiped at boot: staleness is only `kill -0 <holder pid>`,
+  # so a lock left on disk can match a reused pid after a reboot. The user
+  # runtime dir is a tmpfs apart from /tmp and lives on through linger.
+  # sechroom_main must be pulled first, since the ac estate runs its copy.
   unset DPT_LOCK_ROOT
   _dpt_lane=""
   # <estate dir>/<checkout prefix>:<key>
