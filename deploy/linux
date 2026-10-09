@@ -105,6 +105,12 @@ if [[ "$DOTPHILES_HERDR_SERVER" == 1 ]]; then
     echo "Linger is off: herdr-server stops at logout. Run: sudo loginctl enable-linger $USER" >&2
   fi
 fi
+if [[ "$DOTPHILES_DPT_TMP_PRUNE" == 1 ]]; then
+  systemctl --user daemon-reload
+  systemctl --user link "$DIR/../systemd/user/dpt-tmp-prune.service"
+  systemctl --user enable --now "$DIR/../systemd/user/dpt-tmp-prune.timer"
+  echo "Enabled dpt-tmp-prune user timer"
+fi
 if [[ "$DOTPHILES_SSHD" == 1 ]]; then
   sudo systemctl enable --now sshd
   echo "Enabled sshd"

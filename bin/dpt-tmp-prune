@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# Prune stale Freedivr lane temp under ~/.cache/dpt-tmp on sc-dev-01.
+#
+# zshenv points each Freedivr lane's TMPDIR at ~/.cache/dpt-tmp/<lane> and
+# CLAUDE_CODE_TMPDIR at <lane>/claude. Unlike the /tmp tmpfs they replaced,
+# nothing caps or clears them, and they share /home with everything else.
+#
+# A unit is a top-level entry of a lane dir, or a Claude session dir
+# (claude/claude-<uid>/<project>/<session-uuid>). A unit goes only when nothing
+# in it changed for DPT_TMP_PRUNE_DAYS days (default 3) and no live process has
+# its working directory or an open file inside it, so a long-running dev server
+# in an old scratchpad worktree survives. Empty dirs are tidied afterwards.
+#
+#   dpt-tmp-prune        prune
+#   dpt-tmp-prune -n     list what would go, delete nothing
+#
+# Run by systemd/user/dpt-tmp-prune.timer.
+
+set -euo pipefail
+
+root=${DPT_TMP_ROOT:-$HOME/.cache/dpt-tmp}
+days=${DPT_TMP_PRUNE_DAYS:-3}
+dry_run=0
+[[ "${1:-}" == -n ]] && dry_run=1
+
+[[ -d "$root" ]] || exit 0
+
+# Paths live processes hold inside the root: working directories and open files.
+busy=()
+for proc in /proc/[0-9]*; do
+  for link in "$proc/cwd" "$proc"/fd/*; do
+    target=$(readlink "$link" 2>/dev/null) || continue
+    [[ "$target" == "$root/"* ]] && busy+=("$target")
+  done
+done
+
+in_use() {
+  local unit=$1 path
+  for path in "${busy[@]}"; do
+    [[ "$path" == "$unit" || "$path" == "$unit/"* ]] && return 0
+  done
+  return 1
+}
+
+units() {
+  local lane entry
+  for lane in "$root"/*/; do
+    lane=${lane%/}
+    for entry in "$lane"/* "$lane"/.[!.]*; do
+      [[ -e "$entry" && "$entry" != "$lane/claude" ]] && printf '%s\n' "$entry"
+    done
+    [[ -d "$lane/claude" ]] && find "$lane/claude" -mindepth 3 -maxdepth 3 -type d \
+      -regextype posix-extended \
+      -regex '.*/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+  done
+  return 0
+}
+
+freed=0
+while IFS= read -r unit; do
+  [[ -n "$(find "$unit" -newermt "-$days days" -print -quit 2>/dev/null)" ]] && continue
+  in_use "$unit" && continue
+  kb=$(du -sk "$unit" 2>/dev/null | cut -f1)
+  freed=$((freed + ${kb:-0}))
+  if (( dry_run )); then
+    echo "would remove ${kb}K $unit"
+  else
+    echo "removing ${kb}K $unit"
+    rm -rf -- "$unit"
+  fi
+done < <(units)
+
+if (( ! dry_run )); then
+  find "$root" -mindepth 2 -type d -empty -mmin "+$((days * 1440))" -delete 2>/dev/null || true
+fi
+
+echo "dpt-tmp-prune: $((freed / 1024))M $([[ $dry_run == 1 ]] && echo reclaimable || echo freed) under $root"

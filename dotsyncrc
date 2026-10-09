@@ -59,6 +59,8 @@ systemd/sleep.conf.d:.config/systemd/sleep.conf.d
 systemd/system-sleep:.config/systemd/system-sleep
 systemd/user/idle-suspend.service:.config/systemd/user/idle-suspend.service
 systemd/user/herdr-server.service:.config/systemd/user/herdr-server.service
+systemd/user/dpt-tmp-prune.service:.config/systemd/user/dpt-tmp-prune.service
+systemd/user/dpt-tmp-prune.timer:.config/systemd/user/dpt-tmp-prune.timer
 #input/editrc
 #input/inputrc
 #irssi

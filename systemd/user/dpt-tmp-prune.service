@@ -1,0 +1,9 @@
+[Unit]
+Description=Prune stale Freedivr lane temp under ~/.cache/dpt-tmp
+
+[Service]
+Type=oneshot
+ExecStart=%h/.dotfiles/bin/dpt-tmp-prune
+# Housekeeping only; stay out of the lanes' way.
+Nice=19
+IOSchedulingClass=idle
