@@ -51,16 +51,18 @@ fi
 [[ "${HOST%%.*}" == sc-dev-01 ]] && export DPT_DOTNET_BUILD_SLOTS="${DPT_DOTNET_BUILD_SLOTS:-2}"
 
 # sc-dev-01 only: keep estate temp off /tmp, a 32G tmpfs that filled on
-# 2026-10-08 and blocked the shared test lock. DPT_LOCK_ROOT is one path for
-# every estate; the lock scripts adopt it together or not at all, since
-# sechroom, abcs and Freedivr share the dotnet slots (DLA-1997). TMPDIR and
+# 2026-10-08 and blocked the shared test lock. TMPDIR and
 # Claude Code's temp root are per lane, keyed <estate>-<lane> by the checkout
 # the herdr pane starts in: <prefix>_<lane>, review/<lane> or conductor.
 # Shells started later inside a lane inherit them unchanged. bin/dpt-tmp-prune
 # clears what goes stale.
 if [[ "${HOST%%.*}" == sc-dev-01 ]]; then
-  export DPT_LOCK_ROOT="${DPT_LOCK_ROOT:-$HOME/.cache/dpt-locks}"
-  [[ -d "$DPT_LOCK_ROOT" ]] || mkdir -p "$DPT_LOCK_ROOT"
+  # Not yet: sechroom, abcs and Freedivr share the dotnet slots through one
+  # lock root, so it moves only once all three lock scripts read
+  # DPT_LOCK_ROOT (DLA-1997). Until then an estate that saw it set would lock
+  # apart from the others, so clear what panes started 2026-10-10 inherited.
+  # Cutover: export DPT_LOCK_ROOT="$HOME/.cache/dpt-locks" here.
+  unset DPT_LOCK_ROOT
   _dpt_lane=""
   # <estate dir>/<checkout prefix>:<key>
   for _dpt_spec in \
