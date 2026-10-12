@@ -1,0 +1,14 @@
+[Unit]
+Description=Sample sc-dev-01 memory, dotnet slots and disk headroom every 30s
+
+[Service]
+# Through zsh so zshenv supplies the host's env (DPT_LOCK_ROOT after cutover);
+# restart the service after zshenv changes it.
+ExecStart=/usr/bin/zsh -c 'exec "$HOME/.dotfiles/bin/estate-usage-sampler"'
+Restart=always
+RestartSec=30
+Nice=19
+IOSchedulingClass=idle
+
+[Install]
+WantedBy=default.target

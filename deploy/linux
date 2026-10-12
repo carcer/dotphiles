@@ -111,6 +111,11 @@ if [[ "$DOTPHILES_DPT_TMP_PRUNE" == 1 ]]; then
   systemctl --user enable --now "$DIR/../systemd/user/dpt-tmp-prune.timer"
   echo "Enabled dpt-tmp-prune user timer"
 fi
+if [[ "$DOTPHILES_ESTATE_SAMPLER" == 1 ]]; then
+  systemctl --user daemon-reload
+  systemctl --user enable --now "$DIR/../systemd/user/estate-usage-sampler.service"
+  echo "Enabled estate-usage-sampler user service"
+fi
 if [[ "$DOTPHILES_SSHD" == 1 ]]; then
   sudo systemctl enable --now sshd
   echo "Enabled sshd"

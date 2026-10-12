@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+# Sample sc-dev-01 capacity every 30s into ~/estate-metrics/box-usage.csv.
+#
+# Started 2026-09-25 by the sechroom conductor to size DPT_DOTNET_SLOTS, as a
+# nohup loop that died with systemd --user on 2026-10-04. It now runs as the
+# estate-usage-sampler user service and also watches the disks: /home ran out
+# of unallocated btrfs space on 2026-10-11, which leaves metadata no room to
+# grow (ENOSPC with space still "free") and made postgres checkpoints crawl.
+#
+# Columns: memory of the user slice (anon, file, current GB), memory.high hits
+# since the last sample, PSI some/full avg10, load1, held dotnet test slots and
+# their holders, then free GB on /home, /home's unallocated GB and metadata
+# use (% of its chunks), free GB on /opt (docker) and /tmp use (%).
+#
+# A breach writes ~/estate-metrics/ALERT (one reason per line) and logs a
+# warning to the journal; the file goes away once every check passes again.
+# Conductors can test for the file in their loops.
+
+set -uo pipefail
+
+dir=$HOME/estate-metrics
+out=$dir/box-usage.csv
+alert=$dir/ALERT
+lock_root=${DPT_LOCK_ROOT:-/tmp}
+interval=${ESTATE_SAMPLER_INTERVAL:-30}
+header="ts,anon_gb,file_gb,current_gb,high_events_delta,psi_some10,psi_full10,load1,slots_held,holders,home_free_gb,home_unalloc_gb,home_meta_pct,opt_free_gb,tmp_pct"
+
+mkdir -p "$dir"
+# Keep an older layout's samples apart rather than mixing column sets.
+if [[ -s "$out" && "$(head -1 "$out")" != "$header" ]]; then
+  mv "$out" "$dir/box-usage-$(date +%Y%m%d).csv"
+fi
+[[ -s "$out" ]] || echo "$header" > "$out"
+
+cg=/sys/fs/cgroup/user.slice/user-$(id -u).slice
+gb() { awk -v b="$1" 'BEGIN { printf "%.1f", b / 2^30 }'; }
+free_bytes() { df -B1 --output=avail "$1" 2>/dev/null | tail -1 | tr -d ' '; }
+
+prev=$(awk '/^high /{print $2}' "$cg/memory.events")
+while :; do
+  mem=$(awk '/^(anon|file) /{printf "%.2f,", $2/2^30}' "$cg/memory.stat")
+  cur=$(awk '{printf "%.2f", $1/2^30}' "$cg/memory.current")
+  high=$(awk '/^high /{print $2}' "$cg/memory.events"); delta=$((high - prev)); prev=$high
+  psi=$(awk '/^some/{split($2,a,"=");s=a[2]} /^full/{split($2,b,"=");f=b[2]} END{print s","f}' "$cg/memory.pressure")
+  load1=$(cut -d' ' -f1 /proc/loadavg)
+
+  held=0 holders=""
+  for slot in "$lock_root"/dpt-integration*.lock.d; do
+    [[ -d "$slot" ]] || continue
+    held=$((held + 1))
+    holders+="$(cut -d' ' -f2 "$slot/holder" 2>/dev/null | tr ',' ';')|"
+  done
+
+  # btrfs reports this without root; per-device detail is the only part it hides.
+  read -r unalloc meta_size meta_used < <(btrfs filesystem usage -b /home 2>/dev/null | awk '
+    /Device unallocated:/ { u = $3 }
+    /^Metadata,/ {
+      for (i = 1; i <= NF; i++) {
+        if ($i ~ /^Size:/) { s = $i; gsub(/[^0-9]/, "", s) }
+        if ($i ~ /^Used:/) { m = $i; gsub(/[^0-9]/, "", m) }
+      }
+    }
+    END { print u + 0, s + 0, m + 0 }')
+  meta_pct=$(awk -v u="$meta_used" -v s="$meta_size" 'BEGIN { printf "%.0f", s ? 100 * u / s : 0 }')
+  home_free=$(free_bytes /home)
+  opt_free=$(free_bytes /opt)
+  tmp_pct=$(df --output=pcent /tmp | tail -1 | tr -dc 0-9)
+
+  echo "$(date -u +%FT%TZ),${mem}${cur},$delta,$psi,$load1,$held,${holders%|},$(gb "$home_free"),$(gb "$unalloc"),$meta_pct,$(gb "$opt_free"),$tmp_pct" >> "$out"
+
+  reasons=()
+  # Metadata grows only into unallocated space; under 10G it is time to
+  # balance (btrfs balance start -dusage=N /home, as root).
+  (( unalloc < 10 * 2**30 )) && reasons+=("/home btrfs unallocated $(gb "$unalloc")G (<10G): run a data balance")
+  (( meta_pct > 85 && unalloc < 10 * 2**30 )) && reasons+=("/home btrfs metadata ${meta_pct}% with no room to grow: ENOSPC risk")
+  (( home_free < 50 * 2**30 )) && reasons+=("/home free $(gb "$home_free")G (<50G)")
+  (( opt_free < 30 * 2**30 )) && reasons+=("/opt (docker) free $(gb "$opt_free")G (<30G)")
+  (( tmp_pct > 85 )) && reasons+=("/tmp tmpfs ${tmp_pct}% full (>85%)")
+
+  if (( ${#reasons[@]} )); then
+    new=$(printf '%s\n' "${reasons[@]}")
+    # Log on change only, not every 30s.
+    if [[ "$new" != "$(cat "$alert" 2>/dev/null)" ]]; then
+      printf '%s\n' "$new" > "$alert"
+      printf '<4>estate-usage-sampler: %s\n' "${reasons[@]}" >&2
+    fi
+  elif [[ -e "$alert" ]]; then
+    rm -f "$alert"
+    echo "<5>estate-usage-sampler: all checks clear" >&2
+  fi
+
+  sleep "$interval"
+done
