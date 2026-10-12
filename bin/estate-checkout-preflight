@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+# Read-only check of which checkouts in an estate dir are safe to delete.
+#
+#   estate-checkout-preflight [-r refs-file]... [-d idle-days] <estate-dir> [out.tsv]
+#
+# Writes one TSV row per entry of <estate-dir> (default output: stdout) with a
+# verdict (SAFE, HOLD or MANUAL) and the reasons for a HOLD. It deletes
+# nothing; each estate's own job does that, re-running this first. Written
+# for sc-dev-01's 2026-10-11 disk cleanup.
+#
+# SAFE means all of:
+#   - no process has its working directory or an open file inside it
+#   - no repo borrows its objects (objects/info/alternates)
+#   - no live worktree hangs off it (remove those children first)
+#   - no reference to it: in the estate's conductor scripts and json (lanes.json,
+#     fleet.json, bin/, sc-dev-01/), the crontab, user units, herdr config or a
+#     -r file; a bare name counts, since Mac-side paths differ from the box's
+#   - `git status` is clean, untracked files included
+#   - HEAD is on a remote, or its branch's PR is MERGED or CLOSED
+#   - no HEAD reflog entry for -d days (default 3); file mtimes don't count,
+#     since cleanups touch them
+# Entries that aren't git checkouts are MANUAL. The estate's conductor, review
+# and *_main checkouts are skipped.
+#
+# To delete a SAFE worktree: git -C <parent> worktree remove --force <dir>
+# (or rm -rf it and run `git worktree prune` in the parent).
+
+set -uo pipefail
+
+refs_files=()
+idle_min=3
+while getopts r:d: opt; do
+  case $opt in
+    r) refs_files+=("$OPTARG") ;;
+    d) idle_min=$OPTARG ;;
+    *) sed -n '2,4p' "$0" >&2; exit 2 ;;
+  esac
+done
+shift $((OPTIND - 1))
+(( $# >= 1 )) || { sed -n '2,4p' "$0" >&2; exit 2; }
+est=$(cd "$1" && pwd) || exit 1
+out=${2:-/dev/stdout}
+
+# Paths live processes hold, reduced to the estate entry they sit in.
+busy=$(for p in /proc/[0-9]*; do
+         readlink "$p/cwd"
+         for fd in "$p"/fd/*; do readlink "$fd"; done
+       done 2>/dev/null | awk -v e="$est/" 'index($0, e) == 1 { s = substr($0, length(e) + 1); sub(/\/.*/, "", s); print s }' | sort -u)
+
+alts=$(find "$(dirname "$est")" -maxdepth 5 -path '*/objects/info/alternates' -print0 2>/dev/null \
+  | xargs -0 cat 2>/dev/null | awk -v e="$est/" 'index($0, e) == 1 { s = substr($0, length(e) + 1); sub(/\/.*/, "", s); print s }' | sort -u)
+
+# Conductor scripts and registries only: logs and handover notes name old
+# checkouts in passing and would hold everything.
+refs=$( {
+  find "$est/conductor" -type f \( -name '*.json' -o -name '*.sh' -o -path '*/bin/*' -o -path '*/sc-dev-01/*' \) \
+    -size -2M -print0 2>/dev/null | xargs -0 cat 2>/dev/null
+  crontab -l 2>/dev/null
+  cat "$HOME"/.config/systemd/user/*.service "$HOME"/.config/herdr/*.toml 2>/dev/null
+  (( ${#refs_files[@]} )) && cat "${refs_files[@]}"
+} )
+
+# PR state by branch, one `gh pr list` per origin repo. Called in a command
+# substitution, so the cache lives in the file: a "<repo> <TAB> -" row marks
+# a repo as fetched.
+prs_file=$(mktemp); trap 'rm -f "$prs_file"' EXIT
+pr_state() {
+  local repo=$1 branch=$2
+  if ! grep -qxF "$repo"$'\t-' "$prs_file"; then
+    gh pr list -R "$repo" --state all --limit 4000 --json headRefName,state,number \
+      --jq ".[] | [\"$repo\", .headRefName, .state, .number] | @tsv" >> "$prs_file" 2>/dev/null
+    printf '%s\t-\n' "$repo" >> "$prs_file"
+  fi
+  awk -F'\t' -v r="$repo" -v b="$branch" '$1 == r && $2 == b { print $3 "#" $4; exit }' "$prs_file"
+}
+
+now=$(date +%s)
+printf 'verdict\twhy\tname\tkind\tbranch\tpr\tdirty\tahead_of_remotes\tidle_days\n' > "$out"
+for path in "$est"/*/; do
+  path=${path%/}; d=${path##*/}
+  case $d in conductor|review|*_main) continue ;; esac
+  if [[ ! -e "$path/.git" ]]; then
+    printf 'MANUAL\tnot a git checkout\t%s\n' "$d" >> "$out"
+    continue
+  fi
+  kind=clone; [[ -f "$path/.git" ]] && kind=worktree
+  why=()
+  grep -qxF "$d" <<<"$busy" && why+=(busy)
+  grep -qxF "$d" <<<"$alts" && why+=(alternates-dep)
+  wts=0
+  for g in "$path"/.git/worktrees/*/gitdir; do
+    [[ -f "$g" && -e "$(cat "$g")" ]] && wts=$((wts + 1))
+  done
+  (( wts )) && why+=("live-worktrees($wts)")
+  grep -qwF "$d" <<<"$refs" && why+=(referenced)
+
+  dirty=$(timeout 120 git -C "$path" status --porcelain --untracked-files=normal 2>/dev/null | wc -l)
+  (( dirty )) && why+=("dirty($dirty)")
+  ahead=$(timeout 120 git -C "$path" rev-list --count HEAD --not --remotes 2>/dev/null || echo '?')
+  branch=$(git -C "$path" rev-parse --abbrev-ref HEAD 2>/dev/null)
+  repo=$(git -C "$path" remote get-url origin 2>/dev/null | sed -E 's#^.*github\.com[:/]##; s#\.git$##')
+  pr=""
+  [[ -n "$repo" && "$branch" != HEAD ]] && pr=$(pr_state "$repo" "$branch")
+  [[ -n "$pr" ]] || pr=-
+  case $pr in
+    OPEN*) why+=(pr-open) ;;
+    MERGED*|CLOSED*) ;;
+    *) [[ "$ahead" != 0 ]] && why+=("unpushed($ahead)") ;;
+  esac
+  ct=$(git -C "$path" reflog -1 --format=%ct HEAD 2>/dev/null)
+  [[ -n "$ct" ]] || ct=$(git -C "$path" log -1 --format=%ct 2>/dev/null)
+  idle=$(( (now - ${ct:-0}) / 86400 ))
+  (( idle < idle_min )) && why+=("active<${idle_min}d")
+
+  verdict=SAFE; (( ${#why[@]} )) && verdict=HOLD
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$verdict" "$(IFS=,; echo "${why[*]}")" \
+    "$d" "$kind" "$branch" "$pr" "$dirty" "$ahead" "$idle" >> "$out"
+done
