@@ -78,12 +78,28 @@ process. Box conductors may wait for Chris's go before preparing, so relay that 
 Chris says which estates are offline; offline counts as ready. Nudge the outstanding ones
 rather than assuming.
 
+**Box readiness is a marker file, not pane text.** Ask each box conductor to also run
+`touch ~/.cache/herdr-restart-ready/<estate>` (and `rm` it to withdraw). Grepping
+`herdr pane read` for "ready box" gave three false readies on 2026-10-13: conductors
+quote the phrase ("I'll post 'abcs ready box' once…"), and wrapped lines leave it on a
+line by itself. Watch with a Monitor that polls the box every ~45s and exits when all
+markers exist and no slot is held:
+
+```bash
+ssh -o BatchMode=yes sc-dev-01 'echo "ready: $(ls ~/.cache/herdr-restart-ready | sort | tr "\n" " ")| slots: $(find ${DPT_LOCK_ROOT:-/tmp} -maxdepth 1 -name "dpt-integration*.lock.d" | wc -l)"'
+```
+
+Holder of a slot: `cat <slot>/holder` (pid, estate/lane, ticket, start time).
+
 ## 4. Restart
 
 **Box herdr server** (once all are ready and no slot is held). Run it in one ssh:
 
 ```bash
 ssh -o BatchMode=yes sc-dev-01 '
+  # recheck; find, not a glob: the remote shell is zsh and an unmatched glob aborts
+  [ $(ls ~/.cache/herdr-restart-ready | wc -l) -eq 3 ] &&
+    [ $(find ${DPT_LOCK_ROOT:-/tmp} -maxdepth 1 -name "dpt-integration*.lock.d" | wc -l) -eq 0 ] || exit 1
   old=$(systemctl --user show -p MainPID --value herdr-server)
   systemctl --user restart herdr-server; sleep 5
   new=$(systemctl --user show -p MainPID --value herdr-server)
@@ -111,7 +127,9 @@ that broke.
 ## 5. Close out
 
 - Tell every conductor the new version, the server PID, and "check whether herdr restored
-  your panes before relaunching, so you don't start duplicates".
+  your panes before relaunching, so you don't start duplicates". Restores keep pane IDs
+  but can drop agent names, so tell them to address panes by ID (0.9.4 restore: 30/30
+  panes back, most names gone). Clear `~/.cache/herdr-restart-ready/*`.
 - Rerun `estate-tool-versions` and give Chris the before/after.
 - Note anything new about the box in the sc-dev-01 memory.
 
