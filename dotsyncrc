@@ -62,6 +62,7 @@ systemd/user/herdr-server.service:.config/systemd/user/herdr-server.service
 systemd/user/dpt-tmp-prune.service:.config/systemd/user/dpt-tmp-prune.service
 systemd/user/dpt-tmp-prune.timer:.config/systemd/user/dpt-tmp-prune.timer
 systemd/user/estate-usage-sampler.service:.config/systemd/user/estate-usage-sampler.service
+claude/skills/estate-tool-rollout:.claude-ocd/skills/estate-tool-rollout
 #input/editrc
 #input/inputrc
 #irssi
