@@ -30,6 +30,15 @@ Report it to Chris as a short table before changing anything.
 | codex | `npm i -g @openai/codex@<ver>` under nvm's Node | same, via `zsh -lc`. First check no `npm install` is already running; afterwards check `codex --version`, the `@openai/codex-linux-x64` platform package and no `.codex-*` leftovers. An interrupted install leaves codex broken. |
 | .NET | isen-ng casks: `brew upgrade --cask dotnet-sdk dotnet-sdk@8 dotnet-sdk9-0-300`. The .pkg needs sudo, so Chris runs it in a real terminal (not `!`, which has no stdin). | pacman (`dotnet-*-bin`, chaotic-aur), so Chris runs `sudo pacman -Syu dotnet-sdk-bin dotnet-sdk-9.0-bin`, and only when no test slot is held. |
 
+**herdr agent integrations.** After a herdr upgrade, herdr may say a tool has a "new
+version" when what's outdated is its hook for that agent, not the agent. Check with
+`herdr integration status` (local only; for the box, ssh in and run it there). Fix with
+`herdr integration install codex` (or claude) on each host, after backing up
+`~/.codex/herdr-agent-state.sh` and `hooks.json`. It merges into `hooks.json` and keeps the
+sechroom hooks. Running agents keep their old hooks until they restart. A new codex
+session may ask once to trust the added hooks, so warn the conductors that relaunch
+lanes unattended. (2026-10-13: codex hook v8 → v9 came with herdr 0.9.4.)
+
 Patch Tuesday (second Tuesday, ~18:00 UTC) is when .NET ships. dotnet/core's
 release notes have it first; brew casks and chaotic-aur trail by about a day, so say so
 and offer to recheck rather than installing from dotnet-install.sh.
