@@ -116,7 +116,12 @@ crash-looping "already running"), stop the unit, then `herdr server stop` (grace
 through the API) and `systemctl --user start herdr-server`. Never kill it.
 
 **Mac herdr server.** It hosts this session, so Chris runs it from a terminal tab
-outside herdr: `herdr server stop`, then `herdr`, then `herdr status`.
+outside herdr: `herdr server stop`, then `herdr`, then `herdr status`. Before that, prompt
+*every* Mac agent pane (planners, marketing, reviews, not only conductors), each one
+touching `~/.cache/herdr-restart-ready-mac/<pane-id>`, and list the agent-less shells
+(ac's w0, irregular-apocalypse, ...) for Chris to check by eye. Afterwards, compare
+`herdr pane list` with the list from before. On 2026-10-13 the Mac's codex panes came back as
+plain shells (claude resumed, codex didn't), so tell their conductor to relaunch them.
 
 **Agents onto new claude/codex.** Ask each estate to restart its lanes at their next
 natural break (`claude --resume` keeps the conversation). Never restart their sessions
