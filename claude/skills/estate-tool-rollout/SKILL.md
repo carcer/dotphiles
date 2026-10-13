@@ -50,8 +50,11 @@ herdr agent list | jq -r '.result.agents[] | [.pane_id, .name // "-", .agent_sta
 herdr --machine sc-dev-01 agent list | jq -r '...same...'
 ```
 
-Look for the `*/conductor` cwds. As of 2026-10-13: Mac sechroom `wT:p1`, freedivr
-`w11:pD`. Box sechroom `wG:p9`, freedivr `w9:p13`, abcs `wB:p7`. This session is `wV:p1`.
+A `*/conductor` cwd is a hint, not proof: other sessions (reviews, gym) also run from
+the conductor dir. Confirm by pane name or terminal title, or ask Chris. On 2026-10-13
+`w11:pD` looked like Freedivr's Mac conductor but was a gym-review session. Panes
+confirmed that day: Mac sechroom `wT:p1`; box sechroom `wG:p9`, freedivr `w9:p13`, abcs
+`wB:p7`. No Freedivr or ABCS conductor ran on the Mac. This session is `wV:p1`.
 The box can't reach the Mac's herdr, so box conductors answer through their Mac
 conductor (sechroom) or need a Mac-side relay.
 
