@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+# Finish an OAuth sign-in started on sc-dev-01 using the Mac's browser.
+# CLIs on the box (Claude Code /mcp and `claude mcp login`, sechroom login,
+# ...) listen for the callback on the box's localhost:<port>. This forwards
+# that one port from the Mac's localhost to the box with ssh -L, opens the
+# link here, and closes the forward once the box stops listening on the port
+# (the sign-in finished) or after 10 minutes. You still approve in the
+# browser; nothing is approved for you.
+#
+#   box-oauth <pane-id>   the newest sign-in link printed in that box pane,
+#                         e.g. after choosing Authenticate in /mcp
+#   box-oauth <url>       a link copied by hand
+#   box-oauth --watch     open each link the box's BROWSER hook (oauth-to-mac)
+#                         queues; runs for good, reconnecting
+#   box-oauth --install   run --watch as a LaunchAgent (--uninstall removes it)
+#
+# BOX_OAUTH_HOST picks the box (default sc-dev-01). BOX_OAUTH_OPEN replaces
+# `open` (tests). Logs say which port was forwarded, never the link itself.
+
+set -uo pipefail
+host=${BOX_OAUTH_HOST:-sc-dev-01}
+opener=${BOX_OAUTH_OPEN:-open}
+ssh_opts=(-o BatchMode=yes -o ConnectTimeout=10)
+label=codes.ocd.box-oauth
+plist=~/Library/LaunchAgents/$label.plist
+
+log() { echo "box-oauth $(date +%H:%M:%S): $*" >&2; }
+
+# The localhost port in the link's redirect_uri, or nothing.
+callback_port() {
+  python3 -I -c '
+import sys, urllib.parse as u
+r = u.parse_qs(u.urlsplit(sys.argv[1]).query).get("redirect_uri", [""])[0]
+p = u.urlsplit(r)
+if p.hostname in ("localhost", "127.0.0.1", "::1") and p.port:
+    print(p.port)' "$1"
+}
+
+box_listening() { ssh "${ssh_opts[@]}" "$host" "ss -Hltn 'sport = :$1' | grep -q ."; }
+
+sign_in() {
+  local url=$1 port fwd deadline
+  port=$(callback_port "$url")
+  if [[ -z $port ]]; then
+    log "link has no localhost callback; opening it as is"
+    "$opener" "$url"
+    return
+  fi
+  if ! box_listening "$port"; then
+    log "nothing on $host is waiting on port $port (the CLI timed out?): start the sign-in again"
+    return 1
+  fi
+  if lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1; then
+    log "port $port is already in use on the Mac; can't forward it"
+    return 1
+  fi
+  ssh "${ssh_opts[@]}" -o ExitOnForwardFailure=yes -N -L "$port:localhost:$port" "$host" &
+  fwd=$!
+  for _ in {1..50}; do
+    lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1 && break
+    kill -0 "$fwd" 2>/dev/null || { log "forward for port $port failed"; return 1; }
+    sleep 0.1
+  done
+  log "forwarding localhost:$port to $host; opening the sign-in"
+  "$opener" "$url"
+  deadline=$((SECONDS + 600))
+  while ((SECONDS < deadline)); do
+    sleep 3
+    box_listening "$port" || break
+  done
+  kill "$fwd" 2>/dev/null
+  wait "$fwd" 2>/dev/null
+  log "closed the forward for port $port"
+}
+
+case ${1:-} in
+  --watch)
+    log "watching $host for sign-in links"
+    while :; do
+      ssh "${ssh_opts[@]}" -o ServerAliveInterval=30 "$host" '~/bin/oauth-to-mac --follow' |
+        while IFS= read -r url; do
+          [[ -n $url ]] && sign_in "$url" &
+        done
+      sleep 10
+    done
+    ;;
+  --install)
+    mkdir -p ~/Library/LaunchAgents ~/Library/Logs
+    cat > "$plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>$label</string>
+  <key>ProgramArguments</key><array><string>$HOME/bin/box-oauth</string><string>--watch</string></array>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin</string></dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardErrorPath</key><string>$HOME/Library/Logs/box-oauth.log</string>
+  <key>StandardOutPath</key><string>$HOME/Library/Logs/box-oauth.log</string>
+</dict></plist>
+EOF
+    launchctl bootout "gui/$UID/$label" 2>/dev/null
+    launchctl bootstrap "gui/$UID" "$plist" && log "LaunchAgent $label running; log: ~/Library/Logs/box-oauth.log"
+    ;;
+  --uninstall)
+    launchctl bootout "gui/$UID/$label" 2>/dev/null
+    rm -f "$plist" && log "LaunchAgent $label removed"
+    ;;
+  http://* | https://*)
+    sign_in "$1"
+    ;;
+  w*:p*)
+    url=$(herdr --machine "$host" pane read "$1" --source recent-unwrapped --lines 400 2>/dev/null |
+      grep -oE 'https?://[^[:space:]"<>]*redirect_uri=[^[:space:]"<>]*' | tail -1)
+    if [[ -z $url ]]; then
+      log "no sign-in link in pane $1 on $host: choose Authenticate there first"
+      exit 1
+    fi
+    sign_in "$url"
+    ;;
+  *)
+    sed -n '2,/^$/s/^# \{0,1\}//p' "$0"
+    exit 2
+    ;;
+esac

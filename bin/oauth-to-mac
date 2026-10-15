@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# sc-dev-01's BROWSER hook (set in zshenv): queue a sign-in link for the Mac
+# instead of trying to open a browser on a box that has none. On the Mac,
+# `box-oauth --watch` (a LaunchAgent) opens it in Chris's browser and
+# forwards the link's localhost callback port back here until the sign-in
+# finishes. Claude Code (/mcp, `claude mcp login`) runs `$BROWSER <url>`.
+#
+#   oauth-to-mac <url>     queue one link (mode 600; removed once the Mac takes it)
+#   oauth-to-mac --follow  for box-oauth --watch over ssh: print each queued
+#                          link once as it arrives, then delete it
+#
+# Prints no link contents to logs. Links older than 10 minutes are dropped:
+# the CLI waiting for that callback has given up by then.
+
+set -euo pipefail
+q=${XDG_CACHE_HOME:-$HOME/.cache}/oauth-to-mac
+
+case ${1:-} in
+  --follow)
+    mkdir -p -m 700 "$q"
+    while :; do
+      find "$q" -maxdepth 1 -name '*.url' -mmin +10 -delete
+      for f in "$q"/*.url; do
+        [[ -e $f ]] || continue
+        cat "$f"; echo
+        rm -f "$f"
+      done
+      sleep 1
+    done
+    ;;
+  http://* | https://*)
+    mkdir -p -m 700 "$q"
+    umask 077
+    f="$q/$(date +%s)-$$.url"
+    printf '%s' "$1" > "$f.tmp" && mv "$f.tmp" "$f"
+    echo "oauth-to-mac: sign-in link sent to the Mac's browser." >&2
+    echo "  If nothing opens there within a few seconds, run on the Mac: box-oauth <this pane id>" >&2
+    ;;
+  *)
+    echo "usage: oauth-to-mac <url> | --follow" >&2
+    exit 2
+    ;;
+esac
