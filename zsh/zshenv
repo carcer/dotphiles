@@ -50,6 +50,11 @@ fi
 [[ "${HOST%%.*}" == sc-dev-01 ]] && export DPT_DOTNET_SLOTS="${DPT_DOTNET_SLOTS:-3}"
 [[ "${HOST%%.*}" == sc-dev-01 ]] && export DPT_DOTNET_BUILD_SLOTS="${DPT_DOTNET_BUILD_SLOTS:-2}"
 
+# sc-dev-01 only: the box has no browser, so sign-in links (Claude Code /mcp
+# and `claude mcp login`, sechroom login, gh) go to the Mac, where the
+# box-oauth LaunchAgent opens them and forwards the callback port back here.
+[[ "${HOST%%.*}" == sc-dev-01 && -z "${BROWSER:-}" ]] && export BROWSER="$HOME/bin/oauth-to-mac"
+
 # sc-dev-01 only: keep estate temp off /tmp, a 32G tmpfs that filled on
 # 2026-10-08 and blocked the shared test lock. TMPDIR and
 # Claude Code's temp root are per lane, keyed <estate>-<lane> by the checkout
