@@ -161,6 +161,18 @@ touching `~/.cache/herdr-restart-ready-mac/<pane-id>`, and list the agent-less s
 `herdr pane list` with the list from before. On 2026-10-13 the Mac's codex panes came back as
 plain shells (claude resumed, codex didn't), so tell their conductor to relaunch them.
 
+**A server restart hammers the sechroom-ocd MCP endpoint.** Every restored agent connects to
+`https://app.sechroom.ai/api/t/ocd/mcp` within seconds. That's about 25 panes on the box, and
+its tools/list is ~1,400 tools and 1.9 MB. On 2026-10-15 that took 5–52 s per call while the
+aggregator's youtrack/outline upstreams were failing (SBC-1710). Codex lanes came back with
+"timed out awaiting tools/list". Since then every `.codex/config.toml` defining sechroom-ocd has
+`required = true` and `startup_timeout_sec = 120`. Without `required`, Codex 0.162 starts with the
+server "pending optional" and never gets its tools. With it, a slow aggregator makes Codex
+refuse to start. Before a restart, tell the estates to expect this. Afterwards, ask each conductor
+to check its Codex lanes have the MCP, and relaunch failures one at a time (`/quit`, check
+with `pgrep` that the old process is gone, then `herdr agent start <name> --kind codex --pane
+<id> -- resume <session-id>`) rather than all at once.
+
 **Agents onto new claude/codex.** Ask each estate to restart its lanes at their next
 natural break (`claude --resume` keeps the conversation). Never restart their sessions
 yourself. Auto-resume drops a pane's `CLAUDE_CONFIG_DIR`; the zshrc `claude` function
