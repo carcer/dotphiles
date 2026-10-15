@@ -49,19 +49,23 @@ fi
 # 44G soft cap in ~57% of samples vs ~10% at 2. Drop back to 2 if it thrashes.
 [[ "${HOST%%.*}" == sc-dev-01 ]] && export DPT_DOTNET_SLOTS="${DPT_DOTNET_SLOTS:-3}"
 [[ "${HOST%%.*}" == sc-dev-01 ]] && export DPT_DOTNET_BUILD_SLOTS="${DPT_DOTNET_BUILD_SLOTS:-2}"
+# chris-framework, the second lane runner beside sc-dev-01 from 2026-10:
+# start at one test slot until its RAM and a week of box-usage.csv say more.
+[[ "${HOST%%.*}" == chris-framework ]] && export DPT_DOTNET_SLOTS="${DPT_DOTNET_SLOTS:-1}"
+[[ "${HOST%%.*}" == chris-framework ]] && export DPT_DOTNET_BUILD_SLOTS="${DPT_DOTNET_BUILD_SLOTS:-1}"
 
-# sc-dev-01 only: the box has no browser, so sign-in links (Claude Code /mcp
+# Lane runners (sc-dev-01, chris-framework): no browser at hand, so sign-in links (Claude Code /mcp
 # and `claude mcp login`, sechroom login, gh) go to the Mac, where the
 # box-oauth LaunchAgent opens them and forwards the callback port back here.
-[[ "${HOST%%.*}" == sc-dev-01 && -z "${BROWSER:-}" ]] && export BROWSER="$HOME/bin/oauth-to-mac"
+[[ "${HOST%%.*}" == (sc-dev-01|chris-framework) && -z "${BROWSER:-}" ]] && export BROWSER="$HOME/bin/oauth-to-mac"
 
-# sc-dev-01 only: keep estate temp off /tmp, a 32G tmpfs that filled on
+# Lane runners (sc-dev-01, chris-framework): keep estate temp off /tmp, a 32G tmpfs that filled on
 # 2026-10-08 and blocked the shared test lock. TMPDIR and
 # Claude Code's temp root are per lane, keyed <estate>-<lane> by the checkout
 # the herdr pane starts in: <prefix>_<lane>, review/<lane> or conductor.
 # Shells started later inside a lane inherit them unchanged. bin/dpt-tmp-prune
 # clears what goes stale.
-if [[ "${HOST%%.*}" == sc-dev-01 ]]; then
+if [[ "${HOST%%.*}" == (sc-dev-01|chris-framework) ]]; then
   # Not yet: sechroom, abcs and Freedivr share the dotnet slots through one
   # lock root, so it moves only once all three lock scripts read
   # DPT_LOCK_ROOT (DLA-1997). Until then an estate that saw it set would lock

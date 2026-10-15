@@ -43,7 +43,7 @@ host-only service off.
 
 | Profile               | Role   | Notes                                                        |
 |-----------------------|--------|--------------------------------------------------------------|
-| `chris-framework.sh`  | laptop | fingerprint PAM, MT7925 Bluetooth workaround                 |
+| `chris-framework.sh`  | host   | second lane runner at Andy's: herdr-server, sshd, lid ignored |
 | `chris-xps159500.sh`  | host   | always-on estate host: herdr-server, sshd, lid/idle ignored  |
 
 Sway per-host output/input/autostart lives in `../sway/hosts/<hostname>.conf`;
