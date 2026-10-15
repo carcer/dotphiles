@@ -95,7 +95,10 @@ conductor (sechroom) or need a Mac-side relay.
 
 **Send the heads-up** with `herdr agent prompt <pane> "<msg>"` (or `herdr --machine
 sc-dev-01 agent prompt ...`). Expect `agent_prompted`. Write the message to a file and
-substitute per estate. zsh doesn't word-split `$var`, so loop with arrays. The message
+substitute per estate. zsh doesn't word-split `$var`, so loop with arrays. Sessions on the
+Mac's ocd account (sechroom, Freedivr) can also be reached with SendMessage, which gives them a
+reply channel; get the address from ListAgents each time, because it changes when a session
+restarts. ABCS (abcs account) and the box need `herdr agent prompt`. The message
 should:
 - start `[dotfiles -> <estate>-conductor]`
 - say what restarts on which host, why it's worth it (cite the release notes), and that
