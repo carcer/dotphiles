@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Finish an OAuth sign-in started on sc-dev-01 using the Mac's browser.
-# CLIs on the box (Claude Code /mcp and `claude mcp login`, sechroom login,
+# Finish an OAuth sign-in started on a lane runner (sc-dev-01, chris-framework)
+# using the Mac's browser. CLIs on the box (Claude Code /mcp and `claude mcp login`, sechroom login,
 # ...) listen for the callback on the box's localhost:<port>. This forwards
 # that one port from the Mac's localhost to the box with ssh -L, opens the
 # link here, and closes the forward once the box stops listening on the port
@@ -8,17 +8,20 @@
 # browser; nothing is approved for you.
 #
 #   box-oauth <pane-id>   the newest sign-in link printed in that box pane,
-#                         e.g. after choosing Authenticate in /mcp
+#                         e.g. after choosing Authenticate in /mcp; looks on
+#                         each box in turn (or name one: BOX_OAUTH_HOST=...)
 #   box-oauth <url>       a link copied by hand
-#   box-oauth --watch     open each link the box's BROWSER hook (oauth-to-mac)
-#                         queues; runs for good, reconnecting
+#   box-oauth --watch     open each link any box's BROWSER hook (oauth-to-mac)
+#                         queues; runs for good, reconnecting per box
 #   box-oauth --install   run --watch as a LaunchAgent (--uninstall removes it)
 #
-# BOX_OAUTH_HOST picks the box (default sc-dev-01). BOX_OAUTH_OPEN replaces
+# BOX_OAUTH_HOSTS lists the boxes (default "sc-dev-01 chris-framework"), and
+# BOX_OAUTH_HOST narrows it to one. BOX_OAUTH_OPEN replaces
 # `open` (tests). Logs say which port was forwarded, never the link itself.
 
 set -uo pipefail
-host=${BOX_OAUTH_HOST:-sc-dev-01}
+read -ra hosts <<< "${BOX_OAUTH_HOST:-${BOX_OAUTH_HOSTS:-sc-dev-01 chris-framework}}"
+host=${hosts[0]}
 opener=${BOX_OAUTH_OPEN:-open}
 ssh_opts=(-o BatchMode=yes -o ConnectTimeout=10)
 label=codes.ocd.box-oauth
@@ -36,10 +39,10 @@ if p.hostname in ("localhost", "127.0.0.1", "::1") and p.port:
     print(p.port)' "$1"
 }
 
-box_listening() { ssh "${ssh_opts[@]}" "$host" "ss -Hltn 'sport = :$1' | grep -q ."; }
+box_listening() { ssh "${ssh_opts[@]}" "$host" "ss -Hltn 'sport = :$1' | grep -q ."; }  # uses the caller's $host
 
 sign_in() {
-  local url=$1 port fwd deadline
+  local url=$1 host=${2:-$host} port fwd deadline
   port=$(callback_port "$url")
   if [[ -z $port ]]; then
     log "link has no localhost callback; opening it as is"
@@ -75,14 +78,19 @@ sign_in() {
 
 case ${1:-} in
   --watch)
-    log "watching $host for sign-in links"
-    while :; do
-      ssh "${ssh_opts[@]}" -o ServerAliveInterval=30 "$host" '~/bin/oauth-to-mac --follow' |
-        while IFS= read -r url; do
-          [[ -n $url ]] && sign_in "$url" &
+    for h in "${hosts[@]}"; do
+      (
+        log "watching $h for sign-in links"
+        while :; do
+          ssh "${ssh_opts[@]}" -o ServerAliveInterval=30 "$h" '~/bin/oauth-to-mac --follow' |
+            while IFS= read -r url; do
+              [[ -n $url ]] && sign_in "$url" "$h" &
+            done
+          sleep 30   # box offline or rebooting: retry quietly
         done
-      sleep 10
+      ) &
     done
+    wait
     ;;
   --install)
     mkdir -p ~/Library/LaunchAgents ~/Library/Logs
@@ -110,13 +118,13 @@ EOF
     sign_in "$1"
     ;;
   w*:p*)
-    url=$(herdr --machine "$host" pane read "$1" --source recent-unwrapped --lines 400 2>/dev/null |
-      grep -oE 'https?://[^[:space:]"<>]*redirect_uri=[^[:space:]"<>]*' | tail -1)
-    if [[ -z $url ]]; then
-      log "no sign-in link in pane $1 on $host: choose Authenticate there first"
-      exit 1
-    fi
-    sign_in "$url"
+    for h in "${hosts[@]}"; do
+      url=$(herdr --machine "$h" pane read "$1" --source recent-unwrapped --lines 400 2>/dev/null |
+        grep -oE 'https?://[^[:space:]"<>]*redirect_uri=[^[:space:]"<>]*' | tail -1)
+      [[ -n $url ]] && { sign_in "$url" "$h"; exit; }
+    done
+    log "no sign-in link in pane $1 on ${hosts[*]}: choose Authenticate there first"
+    exit 1
     ;;
   *)
     sed -n '2,/^$/s/^# \{0,1\}//p' "$0"

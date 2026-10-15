@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Read-only: installed vs latest herdr, Claude Code, codex, roslynk and .NET on the Mac
-# and sc-dev-01, plus what a rollout has to wait for on the box.
+# and each lane runner, plus what a rollout has to wait for on each box.
 #
-#   estate-tool-versions [box-host]     (default: sc-dev-01)
+#   estate-tool-versions [box-host ...]     (default: sc-dev-01 chris-framework)
 #
 # Latest versions come from the sources each host installs from: Homebrew for
 # herdr on the Mac, GitHub releases for herdr on the box (`herdr update`), npm
@@ -11,7 +11,8 @@
 # Run by the estate-tool-rollout skill; changes nothing.
 
 set -uo pipefail
-box=${1:-sc-dev-01}
+boxes=("$@")
+(( ${#boxes[@]} )) || boxes=(sc-dev-01 chris-framework)
 
 latest_herdr=$(gh release view -R herdrdev/herdr --json tagName --jq .tagName 2>/dev/null | sed 's/^v//')
 brew_herdr=$(brew info --json=v2 herdr 2>/dev/null | jq -r '.formulae[0].versions.stable // empty')
@@ -40,6 +41,7 @@ report='
 '
 echo "== mac"
 zsh -c "$report"
+for box in "${boxes[@]}"; do
 echo "== $box"
 ssh -o BatchMode=yes -o ConnectTimeout=10 "$box" "zsh -c '$report'
   printf '  running claude: '
@@ -48,3 +50,4 @@ ssh -o BatchMode=yes -o ConnectTimeout=10 "$box" "zsh -c '$report'
   pacman -Q 2>/dev/null | awk '/^dotnet-(sdk|runtime)/{printf \"  pacman  %s %s\n\", \$1, \$2}'
   systemctl --user is-active herdr-server | sed 's/^/  herdr-server unit: /'" \
   || echo "  (unreachable)"
+done
