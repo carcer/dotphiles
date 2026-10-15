@@ -31,11 +31,28 @@ Report it to Chris as a short table before changing anything.
 | roslynk (C# MCP server, NuGet global tool) | Keep the old version's files for the servers already running (Roslyn loads assemblies lazily, and `dotnet tool update` deletes the old folder): `S=~/.dotnet/tools/.store; cd ~; cp -cRp $S/roslynk/<old> $S/roslynk-<old>.keep; dotnet tool update -g roslynk; mv $S/roslynk-<old>.keep $S/roslynk/<old>`. Run it from `~`: the update moves `.store/roslynk`, and a cwd inside it fails with a GetCwd exception. | The same via `zsh -lc`, with `cp -al` (hardlinks) instead of `cp -cRp`. |
 | .NET | isen-ng casks: `brew upgrade --cask dotnet-sdk dotnet-sdk@8 dotnet-sdk9-0-300`. The .pkg needs sudo, so Chris runs it in a real terminal (not `!`, which has no stdin). | pacman (`dotnet-*-bin`, chaotic-aur), so Chris runs `sudo pacman -Syu dotnet-sdk-bin dotnet-sdk-9.0-bin`, and only when no test slot is held. |
 
-New lanes get the new roslynk; running ones keep the old one until their MCP server
-restarts (`/mcp` reconnect or a lane restart), so an FYI to the conductors is enough. Remove the
-kept `<old>` folder once `pgrep -f 'roslynk stdio'` shows no server older than the update;
-until then `dotnet tool list -g` lists both versions. Don't use `roslynk --version`: there is no
-such flag, and it starts the HTTP server on port 6502.
+roslynk runs one shared daemon per host (HTTP on 127.0.0.1:6502). Each lane's `roslynk stdio`
+is a thin client of it, so `get_solution_status` lists every lane's solutions. On 2026-10-14 the
+2.2.0 update broke both daemons: they had been started with their cwd inside
+`.store/roslynk/<old>/…/tools/net10.0/any`, and the update deleted that folder. Restoring the
+files doesn't restore the cwd, so MSBuild's getcwd failed and every solution showed `Faulted`
+("Unable to find the specified file"). After every roslynk update, the daemon therefore has to
+restart:
+- Find it: `lsof -tiTCP:6502 -sTCP:LISTEN` (Mac) or `ss -ltnp | grep 6502` (box). Check its
+  cwd with `lsof -a -p <pid> -d cwd` or `ls -l /proc/<pid>/cwd`.
+- Heads-up to the conductors (the lanes' roslynk calls fail for a few seconds). Then Chris
+  restarts it: the permission check blocks killing the shared daemon from this session. Have it
+  run from `~`, so the next update can't strand it:
+  - box: `kill -TERM <pid>; systemd-run --user --unit=roslynk-daemon --working-directory=$HOME -E DOTNET_ROOT=/usr/share/dotnet $HOME/.dotnet/tools/roslynk`
+    (the next time, `systemctl --user restart roslynk-daemon` once the transient unit exists).
+  - Mac: `kill -TERM <pid>; (cd ~ && nohup ~/.dotnet/tools/roslynk >/dev/null 2>&1 &)`
+- Verify that the new daemon maps `roslynk/<new>/tools` and its cwd is `~`. Then have a fresh
+  client open a real solution and expect `Ready n/n`. Then tell the conductors to `reload_solution`.
+
+The lanes' stdio clients keep the old version until their MCP server restarts (`/mcp` reconnect
+or a lane restart). Remove the kept `<old>` store folder once `pgrep -f 'roslynk stdio'` shows no
+server older than the update; until then `dotnet tool list -g` lists both versions. Don't use
+`roslynk --version`: there is no such flag, and it tries to start a second daemon on 6502.
 
 **herdr agent integrations.** After a herdr upgrade, herdr may say a tool has a "new
 version" when what's outdated is its hook for that agent, not the agent. Check with
