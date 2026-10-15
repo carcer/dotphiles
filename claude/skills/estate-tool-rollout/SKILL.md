@@ -1,6 +1,6 @@
 ---
 name: estate-tool-rollout
-description: Roll out herdr, Claude Code, codex or .NET updates to the Mac and sc-dev-01 without breaking the estates (sechroom, freedivr, abcs, ac) running lanes on them. Use when Chris says an update is out ("herdr update", "new claude code", "patch tuesday for dotnet"), or asks to check for updates on here and the box.
+description: Roll out herdr, Claude Code, codex, roslynk or .NET updates to the Mac and sc-dev-01 without breaking the estates (sechroom, freedivr, abcs, ac) running lanes on them. Use when Chris says an update is out ("herdr update", "new claude code", "roslynk is out", "patch tuesday for dotnet"), or asks to check for updates on here and the box.
 ---
 
 # Estate tool rollout
@@ -28,7 +28,14 @@ Report it to Chris as a short table before changing anything.
 | herdr | `brew upgrade herdr` (never `herdr update` here: it would shadow brew from `~/.local/bin`) | `ssh -o BatchMode=yes sc-dev-01 'cp -p ~/.local/bin/herdr ~/.local/bin/herdr-<old>.bak; herdr update < /dev/null'` (never `--handoff`, see below) |
 | Claude Code | `claude update` | `ssh sc-dev-01 'zsh -lc "claude update"'` (the box only self-updates while an interactive claude runs; `zsh -lc` puts `~/.local/bin` ahead of Andy's stale `/usr/bin/claude`) |
 | codex | `npm i -g @openai/codex@<ver>` under nvm's Node | same, via `zsh -lc`. First check no `npm install` is already running; afterwards check `codex --version`, the `@openai/codex-linux-x64` platform package and no `.codex-*` leftovers. An interrupted install leaves codex broken. |
+| roslynk (C# MCP server, NuGet global tool) | Keep the old version's files for the servers already running (Roslyn loads assemblies lazily, and `dotnet tool update` deletes the old folder): `S=~/.dotnet/tools/.store; cd ~; cp -cRp $S/roslynk/<old> $S/roslynk-<old>.keep; dotnet tool update -g roslynk; mv $S/roslynk-<old>.keep $S/roslynk/<old>`. Run it from `~`: the update moves `.store/roslynk`, and a cwd inside it fails with a GetCwd exception. | The same via `zsh -lc`, with `cp -al` (hardlinks) instead of `cp -cRp`. |
 | .NET | isen-ng casks: `brew upgrade --cask dotnet-sdk dotnet-sdk@8 dotnet-sdk9-0-300`. The .pkg needs sudo, so Chris runs it in a real terminal (not `!`, which has no stdin). | pacman (`dotnet-*-bin`, chaotic-aur), so Chris runs `sudo pacman -Syu dotnet-sdk-bin dotnet-sdk-9.0-bin`, and only when no test slot is held. |
+
+New lanes get the new roslynk; running ones keep the old one until their MCP server
+restarts (`/mcp` reconnect or a lane restart), so an FYI to the conductors is enough. Remove the
+kept `<old>` folder once `pgrep -f 'roslynk stdio'` shows no server older than the update;
+until then `dotnet tool list -g` lists both versions. Don't use `roslynk --version`: there is no
+such flag, and it starts the HTTP server on port 6502.
 
 **herdr agent integrations.** After a herdr upgrade, herdr may say a tool has a "new
 version" when what's outdated is its hook for that agent, not the agent. Check with
@@ -63,7 +70,9 @@ A `*/conductor` cwd is a hint, not proof: other sessions (reviews, gym) also run
 the conductor dir. Confirm by pane name or terminal title, or ask Chris. On 2026-10-13
 `w11:pD` looked like Freedivr's Mac conductor but was a gym-review session. Panes
 confirmed that day: Mac sechroom `wT:p1`; box sechroom `wG:p9`, freedivr `w9:p13`, abcs
-`wB:p7`. No Freedivr or ABCS conductor ran on the Mac. This session is `wV:p1`.
+`wB:p7`. No Freedivr or ABCS conductor ran on the Mac. By 2026-10-14 all three conductors
+had moved to the Mac: sechroom `wT:pY`, abcs `wW:p9` (both named), Freedivr `w11:pG`
+(unnamed; its messages are addressed to `conductor-f5`). So re-list every time. This session is `wV:p1`.
 The box can't reach the Mac's herdr, so box conductors answer through their Mac
 conductor (sechroom) or need a Mac-side relay.
 

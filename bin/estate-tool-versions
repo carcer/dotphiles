@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Read-only: installed vs latest herdr, Claude Code, codex and .NET on the Mac
+# Read-only: installed vs latest herdr, Claude Code, codex, roslynk and .NET on the Mac
 # and sc-dev-01, plus what a rollout has to wait for on the box.
 #
 #   estate-tool-versions [box-host]     (default: sc-dev-01)
 #
 # Latest versions come from the sources each host installs from: Homebrew for
 # herdr on the Mac, GitHub releases for herdr on the box (`herdr update`), npm
-# for Claude Code and codex, and dotnet/core's release notes for .NET (the
+# for Claude Code and codex, NuGet for roslynk, and dotnet/core's release notes for .NET (the
 # Homebrew casks and the box's pacman packages trail those by a day or so).
 # Run by the estate-tool-rollout skill; changes nothing.
 
@@ -17,10 +17,11 @@ latest_herdr=$(gh release view -R herdrdev/herdr --json tagName --jq .tagName 2>
 brew_herdr=$(brew info --json=v2 herdr 2>/dev/null | jq -r '.formulae[0].versions.stable // empty')
 latest_claude=$(npm view @anthropic-ai/claude-code version 2>/dev/null)
 latest_codex=$(npm view @openai/codex version 2>/dev/null)
+latest_roslynk=$(curl -sfL https://api.nuget.org/v3-flatcontainer/roslynk/index.json | jq -r '.versions[-1]')
 
 echo "== latest"
 printf '  herdr   %s (github)  %s (brew)\n' "${latest_herdr:-?}" "${brew_herdr:-?}"
-printf '  claude  %s\n  codex   %s\n' "${latest_claude:-?}" "${latest_codex:-?}"
+printf '  claude  %s\n  codex   %s\n  roslynk %s\n' "${latest_claude:-?}" "${latest_codex:-?}" "${latest_roslynk:-?}"
 for c in 10.0 9.0 8.0; do
   curl -sfL "https://raw.githubusercontent.com/dotnet/core/main/release-notes/$c/releases.json" \
     | jq -r '.releases[0] | "  dotnet  \(."release-version") sdk \(.sdk.version) \(."release-date")\(if .security then " SECURITY (\(."cve-list" | length) CVEs)" else "" end)"'
@@ -33,6 +34,7 @@ report='
   printf "  herdr   %s; server %s\n" "$(herdr --version 2>/dev/null | cut -d" " -f2)" \
     "$(herdr status 2>/dev/null | awk "/^server:/{s=1} s&&/version:/{print \$2; exit}")"
   printf "  claude  %s\n  codex   %s\n" "$(claude --version 2>/dev/null | cut -d" " -f1)" "$(codex --version 2>/dev/null | tail -1 | cut -d" " -f2)"
+  printf "  roslynk %s(%s running)\n" "$(cd ~ && dotnet tool list -g 2>/dev/null | awk "\$1==\"roslynk\"{printf \"%s \", \$2}")" "$(pgrep -f roslynk.stdio | wc -l | tr -d " ")"
   dotnet --list-runtimes 2>/dev/null | awk "/NETCore/{v=v\" \"\$2} END{print \"  dotnet \" v}"
   dotnet --list-sdks 2>/dev/null | awk "{v=v\" \"\$1} END{print \"  sdks   \" v}"
 '
