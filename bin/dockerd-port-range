@@ -14,9 +14,11 @@
 # systemd/user/docker.service.d/50-port-range.conf), so dockerd lives in
 # RootlessKit's own netns. That netns belongs to Docker's user namespace, so the
 # sysctl is allowed without root and touches nothing else on the host.
-# 61000-65000 is clear of the host's ephemeral range and sechroom's 20000-29999.
+# 20000-29999 matches sc-dev-01, which has had the same fix since 2026-09-25 (its own
+# ~/.local/bin/dockerd-portband + docker.service.d/10-portband.conf, from the sechroom
+# conductor). Keep fixed published ports out of this band: Docker hands it out.
 
-range=${DOCKERD_ROOTLESS_PORT_RANGE:-61000 65000}
+range=${DOCKERD_ROOTLESS_PORT_RANGE:-20000 29999}
 
 if ! sysctl -w net.ipv4.ip_local_port_range="$range" >&2; then
   echo "dockerd-port-range: could not set ip_local_port_range to $range (is detach-netns still on?); starting dockerd anyway" >&2
