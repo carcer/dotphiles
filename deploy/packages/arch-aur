@@ -6,3 +6,9 @@ slack-desktop
 postman-bin
 powershell-bin
 expressvpn
+# .NET 9.0 for lane runners (not in Chaotic-AUR; the 10.0 set comes from there).
+dotnet-sdk-9.0-bin
+dotnet-runtime-9.0-bin
+dotnet-targeting-pack-9.0-bin
+aspnet-runtime-9.0-bin
+aspnet-targeting-pack-9.0-bin

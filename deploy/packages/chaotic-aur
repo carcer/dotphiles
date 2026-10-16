@@ -3,13 +3,9 @@
 # SDK 10.0.400 with rollForward latestPatch, so they need the 10.0.4xx feature
 # band. Official Arch has 1xx and CachyOS has 3xx under the same -bin names.
 # Runtime, targeting pack and SDK must come from one build: SDK 401 needs runtime 10.0.12.
+# The .NET 9.0 -bin set isn't in Chaotic-AUR: it comes from the AUR (packages/arch-aur), as on sc-dev-01.
 dotnet-sdk-bin
 dotnet-runtime-bin
 dotnet-targeting-pack-bin
 aspnet-runtime-bin
 aspnet-targeting-pack-bin
-dotnet-sdk-9.0-bin
-dotnet-runtime-9.0-bin
-dotnet-targeting-pack-9.0-bin
-aspnet-runtime-9.0-bin
-aspnet-targeting-pack-9.0-bin
