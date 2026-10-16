@@ -1,0 +1,15 @@
+# Packages installed from the Chaotic-AUR repo by deploy/chaotic-aur.sh on hosts
+# with DOTPHILES_CHAOTIC_AUR=1 (lane runners, matching sc-dev-01). The estates pin
+# SDK 10.0.400 with rollForward latestPatch, so they need the 10.0.4xx feature
+# band. Official Arch has 1xx and CachyOS has 3xx under the same -bin names.
+# Runtime, targeting pack and SDK must come from one build: SDK 401 needs runtime 10.0.12.
+dotnet-sdk-bin
+dotnet-runtime-bin
+dotnet-targeting-pack-bin
+aspnet-runtime-bin
+aspnet-targeting-pack-bin
+dotnet-sdk-9.0-bin
+dotnet-runtime-9.0-bin
+dotnet-targeting-pack-9.0-bin
+aspnet-runtime-9.0-bin
+aspnet-targeting-pack-9.0-bin

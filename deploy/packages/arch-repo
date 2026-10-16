@@ -52,7 +52,8 @@ mesa-utils
 # Development and workstation applications
 docker
 docker-compose
-dotnet-sdk
+# dotnet-sdk: not from here. The estates need the 10.0.4xx band, so lane runners take
+# the .NET -bin set from Chaotic-AUR (packages/chaotic-aur, DOTPHILES_CHAOTIC_AUR=1).
 aspnet-runtime
 protobuf
 vlc

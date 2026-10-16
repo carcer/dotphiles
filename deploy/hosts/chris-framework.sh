@@ -13,3 +13,4 @@ DOTPHILES_HERDR_SERVER=1        # herdr-server user unit enabled at boot
 DOTPHILES_SSHD=1                # sshd enabled for the Mac
 DOTPHILES_DPT_TMP_PRUNE=1       # prune estate lane temp in ~/.cache/dpt-tmp
 DOTPHILES_ESTATE_SAMPLER=1      # sample memory, slots and disk headroom; ~/estate-metrics/ALERT
+DOTPHILES_CHAOTIC_AUR=1         # .NET 10.0.4xx + 9.0 -bin set from Chaotic-AUR, as on sc-dev-01

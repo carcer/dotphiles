@@ -61,6 +61,10 @@ if [[ "$DOTPHILES_SYSTEM" == 1 ]]; then
     install_manifest "$DIR/packages/arch-aur" yay
   fi
 
+  if [[ "$DOTPHILES_CHAOTIC_AUR" == 1 ]]; then
+    "$DIR/chaotic-aur.sh"
+  fi
+
   "$DIR/install-npm-globals.sh"
 else
   echo "DOTPHILES_SYSTEM=0: skipping packages and npm globals (owner-managed)"
