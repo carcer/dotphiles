@@ -63,3 +63,10 @@ spotify-launcher
 libmicrodns
 ttf-firacode-nerd
 starship
+
+# Rust (rustup; toolchains per repo rust-toolchain pin, e.g. Desk 1.98.1) and the Tauri
+# Linux build deps, matching sc-dev-01 for the sechroom Desk lanes.
+rustup
+webkit2gtk-4.1
+appmenu-gtk-module
+xdotool
