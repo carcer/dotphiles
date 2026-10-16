@@ -1,0 +1,44 @@
+#!/bin/bash
+# Forced command for the sc-dev-01 → Mac herdr key (authorized_keys2 on the
+# Mac, `restrict,command="~/bin/herdr-ssh-gate",from="<box tailscale ip>"`).
+# The box's herdr may run the herdr binary on the Mac and nothing else: no
+# shell, no pipes, no other programs. Each request is logged with its verdict
+# (commands carry no secrets) to ~/Library/Logs/herdr-ssh-gate.log.
+#
+# The probes array below lists extra exact commands herdr's setup needs (found in
+# the log as DENY lines while running `herdr machine add` on the box).
+
+set -u
+log=~/Library/Logs/herdr-ssh-gate.log
+cmd=${SSH_ORIGINAL_COMMAND:-}
+herdr_bin=/opt/homebrew/bin/herdr
+
+verdict() { printf '%s %s %s\n' "$(date '+%F %T')" "$1" "${cmd:-<interactive>}" >> "$log"; }
+
+# Exact probe commands herdr's machine setup runs, allowed as whole strings.
+probes=(
+)
+
+for p in ${probes[@]+"${probes[@]}"}; do  # macOS bash 3.2: empty array under set -u
+  if [[ $cmd == "$p" ]]; then
+    verdict ALLOW-PROBE
+    exec /bin/sh -c "$cmd"
+  fi
+done
+
+# Otherwise: `herdr <args>` with plain words only, run without a shell.
+if [[ $cmd =~ [\;\&\|\`\$\<\>\(\)\\\'\"$'\n'] ]]; then
+  verdict DENY-META
+  echo "herdr-ssh-gate: refused" >&2
+  exit 1
+fi
+read -ra argv <<< "$cmd"
+case ${argv[0]:-} in
+  herdr | "$herdr_bin" | */bin/herdr)
+    verdict ALLOW
+    exec "$herdr_bin" "${argv[@]:1}"
+    ;;
+esac
+verdict DENY
+echo "herdr-ssh-gate: refused" >&2
+exit 1
