@@ -174,6 +174,16 @@ touching `~/.cache/herdr-restart-ready-mac/<pane-id>`, and list the agent-less s
 `herdr pane list` with the list from before. On 2026-10-13 the Mac's codex panes came back as
 plain shells (claude resumed, codex didn't), so tell their conductor to relaunch them.
 
+**After a Mac herdr upgrade, re-allow the box's herdr on the Mac.** sc-dev-01 reaches the Mac as
+herdr machine `chris-mac`, through the reverse tunnel `bin/herdr-box-tunnel` keeps up (LaunchAgent
+`codes.ocd.herdr-box-tunnel`). Its key runs only `bin/herdr-ssh-gate`, which allows herdr's setup
+and bridge commands by the SHA-256 of their reviewed text. A new herdr version changes those
+scripts, so they're refused. To re-allow them, run `herdr --machine chris-mac agent list` on the
+box. Each refusal is logged in `~/Library/Logs/herdr-ssh-gate.log`, and each refused stdin script
+is saved under `~/Library/Logs/herdr-ssh-gate-scripts/`. Read every one: it must only run the
+herdr binary (or `uname`/`command -v`/`[ -x ]` probes). Then add its hash to `sh_scripts` or
+`cmd_hashes`, commit, and retest with `agent list` plus a prompt to the Freedivr conductor.
+
 **A server restart hammers the sechroom-ocd MCP endpoint.** Every restored agent connects to
 `https://app.sechroom.ai/api/t/ocd/mcp` within seconds. That's about 25 panes on the box, and
 its tools/list is ~1,400 tools and 1.9 MB. On 2026-10-15 that took 5–52 s per call while the
