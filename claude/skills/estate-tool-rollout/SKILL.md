@@ -41,12 +41,25 @@ restart:
 - Find it: `lsof -tiTCP:6502 -sTCP:LISTEN` (Mac) or `ss -ltnp | grep 6502` (box). Check its
   cwd with `lsof -a -p <pid> -d cwd` or `ls -l /proc/<pid>/cwd`.
 - Heads-up to the conductors (the lanes' roslynk calls fail for a few seconds). Then Chris
-  restarts it: the permission check blocks killing the shared daemon from this session. Have it
-  run from `~`, so the next update can't strand it:
-  - box: `kill -TERM <pid>; systemd-run --user --unit=roslynk-daemon --working-directory=$HOME -E DOTNET_ROOT=/usr/share/dotnet $HOME/.dotnet/tools/roslynk`
-    (the next time, `systemctl --user restart roslynk-daemon` once the transient unit exists).
-  - Mac: `kill -TERM <pid>; (cd ~ && nohup ~/.dotnet/tools/roslynk >/dev/null 2>&1 &)`
-- Verify that the new daemon maps `roslynk/<new>/tools` and its cwd is `~`. Then have a fresh
+  restarts it: the permission check blocks killing the shared daemon from this session. Run it
+  from its own small, empty folder, **never `~`**. Its ASP.NET host recursively watches its
+  working directory for appsettings changes. From `~`, that was all of /home/chris on 2026-10-16:
+  503k inotify watches, 96% of the limit. Every Roslynk solution watcher after it then got
+  ENOSPC and silently stopped syncing files, and .NET 10 never closes those empty watchers on
+  dispose (8,144 leaked inotify instances, so `open_solution` failed). An empty folder also can't
+  be deleted by an update, unlike the old store folder.
+  - box: `systemctl --user stop roslynk-daemon; systemctl --user reset-failed roslynk-daemon;
+    mkdir -p ~/.local/state/roslynk && systemd-run --user --unit=roslynk-daemon
+    --working-directory=$HOME/.local/state/roslynk -E DOTNET_ROOT=/usr/share/dotnet
+    -E DOTNET_hostBuilder__reloadConfigOnChange=false $HOME/.dotnet/tools/roslynk`.
+    The transient unit stays loaded as `failed` after a stop, so `reset-failed` must run before
+    `systemd-run` can reuse the name. `systemctl --user restart roslynk-daemon` keeps the folder and environment.
+  - Mac: `kill -TERM <pid>; mkdir -p ~/.local/state/roslynk && (cd ~/.local/state/roslynk &&
+    DOTNET_hostBuilder__reloadConfigOnChange=false nohup ~/.dotnet/tools/roslynk >/dev/null 2>&1 &)`
+- Verify that the new daemon maps `roslynk/<new>/tools` and its cwd is `~/.local/state/roslynk`.
+  On the box, its inotify handles should all hold watches (`grep -c ^inotify
+  /proc/<pid>/fdinfo/<fd>`, none 0) and the user total should be far below
+  `fs.inotify.max_user_watches`. Then have a fresh
   client open a real solution and expect `Ready n/n`. Then tell the conductors to `reload_solution`.
 
 The lanes' stdio clients keep the old version until their MCP server restarts (`/mcp` reconnect
