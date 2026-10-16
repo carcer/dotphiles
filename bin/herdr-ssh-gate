@@ -1,6 +1,7 @@
 #!/bin/bash
 # Forced command for the sc-dev-01 → Mac herdr key (authorized_keys2 on the
-# Mac, `restrict,command="~/bin/herdr-ssh-gate",from="<box tailscale ip>"`).
+# Mac, `restrict,command="~/bin/herdr-ssh-gate",from="127.0.0.1,::1"`; it arrives
+# through the reverse tunnel bin/herdr-box-tunnel keeps up).
 # The box's herdr may run the herdr binary on the Mac and nothing else: no
 # shell, no pipes, no other programs. Each request is logged with its verdict
 # (commands carry no secrets) to ~/Library/Logs/herdr-ssh-gate.log.
