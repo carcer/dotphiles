@@ -1,7 +1,8 @@
 # Global npm tools used on the Framework workstation.
 # Intentionally unpinned: deployment installs the current release.
+# Claude Code is not here: deploy/linux installs it natively (claude.ai/install.sh) into
+# ~/.local/bin, as on sc-dev-01. The npm package and the native install collide on that path.
 @openai/codex
-@anthropic-ai/claude-code
 @sechroom/cli
 @usebruno/cli
 http-server

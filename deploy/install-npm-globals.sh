@@ -24,5 +24,5 @@ fi
 mapfile -t packages < <(sed -e 's/[[:space:]]*#.*$//' -e '/^[[:space:]]*$/d' "$MANIFEST")
 ((${#packages[@]})) || exit 0
 npm install --global \
-  --allow-scripts=@anthropic-ai/claude-code,protobufjs \
+  --allow-scripts=protobufjs \
   "${packages[@]}"
