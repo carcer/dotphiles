@@ -49,10 +49,11 @@ fi
 # 44G soft cap in ~57% of samples vs ~10% at 2. Drop back to 2 if it thrashes.
 [[ "${HOST%%.*}" == sc-dev-01 ]] && export DPT_DOTNET_SLOTS="${DPT_DOTNET_SLOTS:-3}"
 [[ "${HOST%%.*}" == sc-dev-01 ]] && export DPT_DOTNET_BUILD_SLOTS="${DPT_DOTNET_BUILD_SLOTS:-2}"
-# chris-framework, the second lane runner beside sc-dev-01 from 2026-10:
-# start at one test slot until its RAM and a week of box-usage.csv say more.
-[[ "${HOST%%.*}" == chris-framework ]] && export DPT_DOTNET_SLOTS="${DPT_DOTNET_SLOTS:-1}"
-[[ "${HOST%%.*}" == chris-framework ]] && export DPT_DOTNET_BUILD_SLOTS="${DPT_DOTNET_BUILD_SLOTS:-1}"
+# chris-framework, the second lane runner (sechroom and ABCS from 2026-10-16;
+# 62 GB, 24 threads): two test and two build slots, its own lock, separate from
+# sc-dev-01's. Check ~/estate-metrics/box-usage.csv after the first week.
+[[ "${HOST%%.*}" == chris-framework ]] && export DPT_DOTNET_SLOTS="${DPT_DOTNET_SLOTS:-2}"
+[[ "${HOST%%.*}" == chris-framework ]] && export DPT_DOTNET_BUILD_SLOTS="${DPT_DOTNET_BUILD_SLOTS:-2}"
 
 # Lane runners (sc-dev-01, chris-framework): no browser at hand, so sign-in links (Claude Code /mcp
 # and `claude mcp login`, sechroom login, gh) go to the Mac, where the
