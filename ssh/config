@@ -39,6 +39,15 @@ Host sc-dev-01
   ServerAliveInterval 30
   ServerAliveCountMax 20
 
+# Second lane runner beside sc-dev-01 (Chris's Framework, at Andy's; shared from his tailnet).
+Host chris-framework
+  HostName chris-framework.tail4c789c.ts.net
+  User chris
+  IdentityFile ~/.ssh/master/ocd
+  IdentitiesOnly yes
+  ServerAliveInterval 30
+  ServerAliveCountMax 20
+
 # Straight into the herdr TUI on sc-dev-01.
 Host herdr-sc
   HostName sc-dev-01.tail4c789c.ts.net
