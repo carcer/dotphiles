@@ -2,9 +2,10 @@
 # Intentionally unpinned: deployment installs the current release.
 # Claude Code is not here: deploy/linux installs it natively (claude.ai/install.sh) into
 # ~/.local/bin, as on sc-dev-01. The npm package and the native install collide on that path.
+# pnpm isn't here either: repos pin it via packageManager, so deploy/linux enables corepack's
+# pnpm shims instead (a global npm pnpm is the wrong version, and npm blocks its install script).
 @openai/codex
 @sechroom/cli
 @usebruno/cli
 http-server
-pnpm
 turbo

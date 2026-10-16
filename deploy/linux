@@ -70,6 +70,14 @@ else
   echo "DOTPHILES_SYSTEM=0: skipping packages and npm globals (owner-managed)"
 fi
 
+# pnpm through corepack, as on sc-dev-01: it honours each repo's packageManager pin, and its
+# shim is a Node script with a shebang (turbo execs pnpm directly).
+if command -v corepack >/dev/null 2>&1; then
+  rm -rf "$HOME/.local/lib/node_modules/pnpm"
+  rm -f "$HOME/.local/bin/pnpm" "$HOME/.local/bin/pnpx" "$HOME/.local/bin/pn" "$HOME/.local/bin/pnx"
+  corepack enable --install-directory "$HOME/.local/bin" pnpm
+fi
+
 # Claude Code: the native install in ~/.local/bin (it updates itself), never the npm package.
 if ! [[ -L "$HOME/.local/bin/claude" && "$(readlink "$HOME/.local/bin/claude")" == "$HOME/.local/share/claude/versions/"* ]]; then
   npm rm --global @anthropic-ai/claude-code >/dev/null 2>&1 || true
