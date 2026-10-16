@@ -189,6 +189,14 @@ touching `~/.cache/herdr-restart-ready-mac/<pane-id>`, and list the agent-less s
 `herdr pane list` with the list from before. On 2026-10-13 the Mac's codex panes came back as
 plain shells (claude resumed, codex didn't), so tell their conductor to relaunch them.
 
+**After any herdr upgrade, update its agent hooks in every config folder on every host.**
+`herdr integration install claude` only updates the folder `CLAUDE_CONFIG_DIR` points at. So on
+each host run it for `~/.claude`, `~/.claude-ocd` and `~/.claude-abcs` (e.g. `for d in ~/.claude
+~/.claude-ocd ~/.claude-abcs; do CLAUDE_CONFIG_DIR=$d herdr integration install claude; done`),
+plus `herdr integration install codex`. Check with `herdr integration status`. On 2026-10-16
+`~/.claude-ocd` and `~/.claude-abcs` were still on v10 after the 0.9.5 upgrade (current: v11),
+and Sechroom Desk refused to attach those panes until they were updated.
+
 **After a Mac herdr upgrade, re-allow the box's herdr on the Mac.** sc-dev-01 reaches the Mac as
 herdr machine `chris-mac`, through the reverse tunnel `bin/herdr-box-tunnel` keeps up (LaunchAgent
 `codes.ocd.herdr-box-tunnel`). Its key runs only `bin/herdr-ssh-gate`, which allows herdr's setup
