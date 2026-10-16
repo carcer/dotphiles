@@ -111,8 +111,8 @@ export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock
 
 autoload bashcompinit && bashcompinit
 
-export DOTNET_ROOT="$HOME/.dotnet"
-export PATH="$HOME/.dotnet:$PATH"
+# DOTNET_ROOT and the .NET PATH entries come from zshenv: ~/.dotnet only when a
+# user-installed SDK is there, else the system one.
 
 # Ensure SSH key permissions are correct before loading keychain
 if [ -d "$HOME/.ssh/master" ]; then
