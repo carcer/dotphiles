@@ -18,7 +18,55 @@ verdict() { printf '%s %s %s\n' "$(date '+%F %T')" "$1" "${cmd:-<interactive>}" 
 
 # Exact probe commands herdr's machine setup runs, allowed as whole strings.
 probes=(
+  # herdr 0.9.5: ready marker, then the long-lived bridge or a binary lookup.
+  $'printf \'\n%s\n\' \'herdr-remote-output-ready:1\'\nexec /opt/homebrew/bin/herdr remote-client-bridge'
+  $'printf \'\n%s\n\' \'herdr-remote-output-ready:1\'\nexec /opt/homebrew/bin/herdr remote-client-bridge --idle-timeout-v1'
+  $'printf \'\n%s\n\' \'herdr-remote-output-ready:1\'\ncommand -v herdr'
 )
+
+# herdr's setup also runs `/bin/sh -s` with a detection script on stdin. That
+# would be an open shell, so the script itself must match one of these SHA-256s
+# (each reviewed; a herdr upgrade that changes the script needs a new entry).
+# Unknown scripts are refused and kept in ~/Library/Logs/herdr-ssh-gate-scripts
+# for review.
+sh_scripts=(
+  ecd833a666002595ee7de8fbb4a9bad8dfc1af35236af4807c7a96c540b6dd07  # herdr 0.9.5 platform probe: ready marker, uname -s, uname -m
+  aca79b8e6983be9294d62a87315ee128501ad44f7a9c999092739006158ab1a0  # herdr 0.9.5 binary discovery: command -v herdr
+  7c87b24a8851e84b14f6e35698668d6601ea95ee2d7b912185fba2ea25ed0180  # herdr 0.9.5 binary discovery: [ -x ] on known install paths
+  3954bf8e58a61433ddff5c880cc3e8dfd03264fa5738c370d09076ebf73581c6  # herdr 0.9.5: /opt/homebrew/bin/herdr status client --json
+  64bf0d920223c5e58a51f2d788edaa07c9dc0a02d8380e49159b09daa6920b07  # herdr 0.9.5: ~/.local/bin/herdr status client --json
+  cf03e8a9a8398d41509e6e44d057679a3ffed41203a18ec305344414da9f973b  # herdr 0.9.5: /opt/homebrew/bin/herdr status server --json
+  330184ddce6df0dde81b9a79809da42c26cb2d500c6e5d61be8d4e07ecc6485d  # herdr 0.9.5: exec herdr remote-client-bridge </dev/null (server start)
+)
+
+# Whole commands herdr sends that are too quoted to list as strings (each
+# reviewed: it only runs the herdr binary). Matched by SHA-256 of the exact command.
+cmd_hashes=(
+  4ceee9476045142610b1ba06e11414dad2a49117e5969b182d94d39ed6de730d  # herdr 0.9.5: remote-api-bridge --check, then exec remote-api-bridge
+)
+cmd_sum=$(printf '%s' "$cmd" | shasum -a 256 | cut -d' ' -f1)
+for ok in ${cmd_hashes[@]+"${cmd_hashes[@]}"}; do
+  if [[ $cmd_sum == "$ok" ]]; then
+    verdict "ALLOW-CMD $cmd_sum"
+    exec /bin/sh -c "$cmd"
+  fi
+done
+
+if [[ $cmd == "/bin/sh -s" ]]; then
+  script=$(cat)
+  sum=$(printf '%s' "$script" | shasum -a 256 | cut -d' ' -f1)
+  for ok in ${sh_scripts[@]+"${sh_scripts[@]}"}; do
+    if [[ $sum == "$ok" ]]; then
+      verdict "ALLOW-SCRIPT $sum"
+      exec /bin/sh -c "$script"
+    fi
+  done
+  mkdir -p ~/Library/Logs/herdr-ssh-gate-scripts
+  printf '%s' "$script" > ~/Library/Logs/herdr-ssh-gate-scripts/"$sum".sh
+  verdict "DENY-SCRIPT $sum"
+  echo "herdr-ssh-gate: refused" >&2
+  exit 1
+fi
 
 for p in ${probes[@]+"${probes[@]}"}; do  # macOS bash 3.2: empty array under set -u
   if [[ $cmd == "$p" ]]; then
