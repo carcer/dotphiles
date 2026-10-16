@@ -9,3 +9,7 @@
 
 # Add your ssh key here
 
+
+# sc-dev-01 herdr -> this Mac, via the reverse tunnel bin/herdr-box-tunnel keeps up.
+# Only the herdr binary (bin/herdr-ssh-gate), only from the tunnel.
+restrict,from="127.0.0.1,::1",command="/Users/chris/bin/herdr-ssh-gate" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL8mptmvj6y5j8prZuaW+RixCoafxl/XIqyDpygC3gGY sc-dev-01 herdr -> chriss-macbook-air
