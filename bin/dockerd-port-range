@@ -1,0 +1,25 @@
+#!/bin/sh
+# DOCKERD for dockerd-rootless.sh on the lane runners: give rootless Docker's
+# published ports a range of their own before starting dockerd.
+#
+# Rootless Docker picks each published host port from net.ipv4.ip_local_port_range
+# in dockerd's network namespace, and RootlessKit then binds that same port on the
+# host. With dockerd in the host netns (RootlessKit's detach-netns mode, the
+# default) that is the host's 32768-60999, which is also where every outbound
+# connection gets its port. Busy test runs then lose container starts with
+# "PortManager.AddPort(): listen tcp4 0.0.0.0:NNNNN: bind: address already in use"
+# (chris-framework, 2026-10-16: 68 in 3 hours; ABCS integration runs unusable).
+#
+# Run with DOCKERD_ROOTLESS_ROOTLESSKIT_DETACH_NETNS=false (see
+# systemd/user/docker.service.d/50-port-range.conf), so dockerd lives in
+# RootlessKit's own netns. That netns belongs to Docker's user namespace, so the
+# sysctl is allowed without root and touches nothing else on the host.
+# 61000-65000 is clear of the host's ephemeral range and sechroom's 20000-29999.
+
+range=${DOCKERD_ROOTLESS_PORT_RANGE:-61000 65000}
+
+if ! sysctl -w net.ipv4.ip_local_port_range="$range" >&2; then
+  echo "dockerd-port-range: could not set ip_local_port_range to $range (is detach-netns still on?); starting dockerd anyway" >&2
+fi
+
+exec dockerd "$@"
