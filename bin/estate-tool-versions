@@ -46,7 +46,7 @@ echo "== $box"
 ssh -o BatchMode=yes -o ConnectTimeout=10 "$box" "zsh -c '$report'
   printf '  running claude: '
   for p in \$(pgrep -x claude); do readlink /proc/\$p/exe; done | xargs -rn1 basename | sort | uniq -c | tr '\n' ' '; echo
-  printf '  dotnet test slots held: '; ls -d \${DPT_LOCK_ROOT:-/tmp}/dpt-integration*.lock.d 2>/dev/null | wc -l
+  printf '  dotnet test slots held: '; find \${DPT_LOCK_ROOT:-/tmp} -maxdepth 1 -name 'dpt-integration*.lock.d' 2>/dev/null | wc -l
   pacman -Q 2>/dev/null | awk '/^dotnet-(sdk|runtime)/{printf \"  pacman  %s %s\n\", \$1, \$2}'
   systemctl --user is-active herdr-server | sed 's/^/  herdr-server unit: /'" \
   || echo "  (unreachable)"
