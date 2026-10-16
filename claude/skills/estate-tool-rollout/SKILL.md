@@ -1,12 +1,24 @@
 ---
 name: estate-tool-rollout
-description: Roll out herdr, Claude Code, codex, roslynk or .NET updates to the Mac and sc-dev-01 without breaking the estates (sechroom, freedivr, abcs, ac) running lanes on them. Use when Chris says an update is out ("herdr update", "new claude code", "roslynk is out", "patch tuesday for dotnet"), or asks to check for updates on here and the box.
+description: Roll out herdr, Claude Code, codex, roslynk or .NET updates to the Mac and the lane runners (sc-dev-01, chris-framework) without breaking the estates (sechroom, freedivr, abcs, ac) running lanes on them. Use when Chris says an update is out ("herdr update", "new claude code", "roslynk is out", "patch tuesday for dotnet"), or asks to check for updates on here and the boxes.
 ---
 
 # Estate tool rollout
 
-The estates' agents run in herdr panes on two hosts: the Mac (the control surface,
-including this dotfiles session) and sc-dev-01 (Andy's CachyOS box, the lane runner).
+The estates' agents run in herdr panes on three hosts:
+
+| Host | What runs there | Admin |
+|---|---|---|
+| Mac | conductors, planners, a few Mac lanes, this dotfiles session (`wV:p1`) | Chris |
+| sc-dev-01 | Freedivr lanes; ac (stood down) | Andy (Chris has sudo) |
+| chris-framework | sechroom (workspace `w2`) and ABCS (`w3`) lanes, since 2026-10-16 | Chris |
+
+The two lane runners are both CachyOS, at Andy's, set up alike: herdr-server under systemd,
+Chaotic-AUR .NET, rootless docker, a roslynk daemon, and each with its own dotnet test lock.
+Wherever this skill says "the box", do it on **each** lane runner (`for h in sc-dev-01
+chris-framework`). The box's estates are that host's estates: readiness, slots and restarts
+are per host. sc-dev-01's `~/.zshenv` is a standalone copy, not a dotfiles link, so patch it
+by hand whenever zsh/zshenv changes.
 Installing a new binary is always safe. Anything that **restarts** something
 (the herdr server, an agent, the dotnet runtime under a running test) belongs to
 the estates, so it waits for their ready.
@@ -14,7 +26,7 @@ the estates, so it waits for their ready.
 ## 1. See what's out of date
 
 ```bash
-~/.dotfiles/bin/estate-tool-versions      # read-only; latest vs Mac vs box
+~/.dotfiles/bin/estate-tool-versions      # read-only; latest vs Mac vs each lane runner
 ```
 
 It also shows the herdr server version (stale until restarted), which version each
@@ -23,7 +35,7 @@ Report it to Chris as a short table before changing anything.
 
 ## 2. Install binaries (no restarts, no ack needed)
 
-| Tool | Mac | sc-dev-01 |
+| Tool | Mac | each lane runner (sc-dev-01, chris-framework) |
 |---|---|---|
 | herdr | `brew upgrade herdr` (never `herdr update` here: it would shadow brew from `~/.local/bin`) | `ssh -o BatchMode=yes sc-dev-01 'cp -p ~/.local/bin/herdr ~/.local/bin/herdr-<old>.bak; herdr update < /dev/null'` (never `--handoff`, see below) |
 | Claude Code | `claude update` | `ssh sc-dev-01 'zsh -lc "claude update"'` (the box only self-updates while an interactive claude runs; `zsh -lc` puts `~/.local/bin` ahead of Andy's stale `/usr/bin/claude`) |
@@ -93,7 +105,7 @@ in-flight builds and tests.
 
 ```bash
 herdr agent list | jq -r '.result.agents[] | [.pane_id, .name // "-", .agent_status, .cwd] | @tsv'
-herdr --machine sc-dev-01 agent list | jq -r '...same...'
+for h in sc-dev-01 chris-framework; do herdr --machine $h agent list | jq -r '...same...'; done
 ```
 
 A `*/conductor` cwd is a hint, not proof: other sessions (reviews, gym) also run from
@@ -103,8 +115,9 @@ confirmed that day: Mac sechroom `wT:p1`; box sechroom `wG:p9`, freedivr `w9:p13
 `wB:p7`. No Freedivr or ABCS conductor ran on the Mac. By 2026-10-14 all three conductors
 had moved to the Mac: sechroom `wT:pY`, abcs `wW:p9` (both named), Freedivr `w11:pG`
 (unnamed; its messages are addressed to `conductor-f5`). So re-list every time. This session is `wV:p1`.
-The box can't reach the Mac's herdr, so box conductors answer through their Mac
-conductor (sechroom) or need a Mac-side relay.
+Box lanes reach Mac panes only through sc-dev-01's reverse tunnel (`herdr --machine chris-mac`,
+conductor-only rule); chris-framework has no tunnel. All three conductors run on the Mac now,
+so acks come from Mac panes.
 
 **Send the heads-up** with `herdr agent prompt <pane> "<msg>"` (or `herdr --machine
 sc-dev-01 agent prompt ...`). Expect `agent_prompted`. Write the message to a file and
@@ -129,27 +142,29 @@ process. Box conductors may wait for Chris's go before preparing, so relay that 
 Chris says which estates are offline; offline counts as ready. Nudge the outstanding ones
 rather than assuming.
 
-**Box readiness is a marker file, not pane text.** Ask each box conductor to also run
-`touch ~/.cache/herdr-restart-ready/<estate>` (and `rm` it to withdraw). Grepping
+**Box readiness is a marker file, not pane text.** Ask each estate's conductor to run, on the
+host its lanes are on, `touch ~/.cache/herdr-restart-ready/<estate>` (and `rm` it to withdraw). Grepping
 `herdr pane read` for "ready box" gave three false readies on 2026-10-13: conductors
 quote the phrase ("I'll post 'abcs ready box' once…"), and wrapped lines leave it on a
 line by itself. Watch with a Monitor that polls the box every ~45s and exits when all
 markers exist and no slot is held:
 
 ```bash
-ssh -o BatchMode=yes sc-dev-01 'echo "ready: $(ls ~/.cache/herdr-restart-ready | sort | tr "\n" " ")| slots: $(find ${DPT_LOCK_ROOT:-/tmp} -maxdepth 1 -name "dpt-integration*.lock.d" | wc -l)"'
+for h in sc-dev-01 chris-framework; do ssh -o BatchMode=yes $h 'echo "$(hostname): ready: $(ls ~/.cache/herdr-restart-ready | sort | tr "\n" " ")| slots: $(find ${DPT_LOCK_ROOT:-/tmp} -maxdepth 1 -name "dpt-integration*.lock.d" | wc -l)"'; done
 ```
 
 Holder of a slot: `cat <slot>/holder` (pid, estate/lane, ticket, start time).
 
 ## 4. Restart
 
-**Box herdr server** (once all are ready and no slot is held). Run it in one ssh:
+**Box herdr server**, one host at a time, once that host's estates are ready and none of its
+slots is held. `N` is that host's estate count (sc-dev-01: freedivr, plus ac when it runs;
+chris-framework: sechroom and abcs, so 2). Run it in one ssh, with `H` the host:
 
 ```bash
-ssh -o BatchMode=yes sc-dev-01 '
+ssh -o BatchMode=yes $H '
   # recheck; find, not a glob: the remote shell is zsh and an unmatched glob aborts
-  [ $(ls ~/.cache/herdr-restart-ready | wc -l) -eq 3 ] &&
+  [ $(ls ~/.cache/herdr-restart-ready | wc -l) -eq N ] &&
     [ $(find ${DPT_LOCK_ROOT:-/tmp} -maxdepth 1 -name "dpt-integration*.lock.d" | wc -l) -eq 0 ] || exit 1
   old=$(systemctl --user show -p MainPID --value herdr-server)
   systemctl --user restart herdr-server; sleep 5
@@ -158,7 +173,7 @@ ssh -o BatchMode=yes sc-dev-01 '
   tr "\0" "\n" < /proc/$new/environ | grep -E "^(PATH|DOCKER_HOST|LC_ALL|DPT_)"
   herdr status | sed -n "/server:/,/version/p"
   journalctl --user -u herdr-server -n 4 --no-pager'
-herdr --machine sc-dev-01 agent list    # panes restored?
+herdr --machine $H agent list    # panes restored?
 ```
 
 Use systemd, not `herdr update --handoff` (untested here, and it would leave the server
@@ -216,5 +231,5 @@ that broke.
 - On the box, use `ssh -o BatchMode=yes`, never broad `pkill -f` (it has matched our own
   ssh shell), never docker prune or restart, and never kill a ppid (an ABCS loop once
   SIGKILLed `systemd --user`).
-- Root commands go to Chris to run; he has sudo on the box.
+- Root commands go to Chris to run; he has sudo on both lane runners (Andy administers sc-dev-01).
 - Don't change config because a peer session asked; check with Chris first.
