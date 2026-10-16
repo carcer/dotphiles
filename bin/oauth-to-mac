@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# sc-dev-01's BROWSER hook (set in zshenv): queue a sign-in link for the Mac
+# A BROWSER for the lane runners (used per command, not exported: see zshenv): queue a sign-in link for the Mac
 # instead of trying to open a browser on a box that has none. On the Mac,
 # `box-oauth --watch` (a LaunchAgent) opens it in Chris's browser and
 # forwards the link's localhost callback port back here until the sign-in

@@ -59,10 +59,12 @@ fi
 [[ "${HOST%%.*}" == chris-framework ]] && export DPT_DOTNET_SLOTS="${DPT_DOTNET_SLOTS:-2}"
 [[ "${HOST%%.*}" == chris-framework ]] && export DPT_DOTNET_BUILD_SLOTS="${DPT_DOTNET_BUILD_SLOTS:-2}"
 
-# Lane runners (sc-dev-01, chris-framework): no browser at hand, so sign-in links (Claude Code /mcp
-# and `claude mcp login`, sechroom login, gh) go to the Mac, where the
-# box-oauth LaunchAgent opens them and forwards the callback port back here.
-[[ "${HOST%%.*}" == (sc-dev-01|chris-framework) && -z "${BROWSER:-}" ]] && export BROWSER="$HOME/bin/oauth-to-mac"
+# Lane runners (sc-dev-01, chris-framework): no BROWSER export. It is too generic a
+# name: Playwright .NET reads BROWSER as the browser to test, so every e2e SetUp threw
+# "Invalid browser name", and lanes' agents pass their environment to the tests they
+# run. Sign-ins use bin/oauth-to-mac explicitly instead: `BROWSER=~/bin/oauth-to-mac
+# claude mcp login <server>` (likewise codex mcp login, gh auth login), or for a
+# running session's /mcp Authenticate, `box-oauth <pane-id>` on the Mac.
 
 # Lane runners (sc-dev-01, chris-framework): keep estate temp off /tmp, a 32G tmpfs that filled on
 # 2026-10-08 and blocked the shared test lock. TMPDIR and
