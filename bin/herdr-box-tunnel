@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Keep a reverse SSH tunnel from the Mac to sc-dev-01, so herdr on the box can
+# reach this Mac's herdr (lanes messaging their Mac conductor). The box is a
+# tagged node in another tailnet, and Tailscale won't let tagged nodes reach a
+# shared machine, so the Mac opens the path itself: box 127.0.0.1:2222 → Mac sshd.
+#
+# On the box, `Host chris-mac` points at 127.0.0.1:2222 with ~/.ssh/herdr_mac.
+# On the Mac, that key is in ~/.ssh/authorized_keys2 as
+# restrict,from="127.0.0.1,::1",command="~/bin/herdr-ssh-gate" (herdr only).
+#
+#   herdr-box-tunnel            run the tunnel in the foreground (what launchd runs)
+#   herdr-box-tunnel --install  run it as a LaunchAgent (--uninstall removes it)
+#
+# HERDR_TUNNEL_HOST picks the box (default sc-dev-01).
+
+set -uo pipefail
+host=${HERDR_TUNNEL_HOST:-sc-dev-01}
+label=codes.ocd.herdr-box-tunnel
+plist=~/Library/LaunchAgents/$label.plist
+
+case ${1:-} in
+  "")
+    # ssh exits when the link drops; launchd's KeepAlive restarts it after ThrottleInterval.
+    exec ssh -N -o BatchMode=yes -o ExitOnForwardFailure=yes \
+      -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ConnectTimeout=15 \
+      -R 127.0.0.1:2222:127.0.0.1:22 "$host"
+    ;;
+  --install)
+    mkdir -p ~/Library/LaunchAgents ~/Library/Logs
+    cat > "$plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>$label</string>
+  <key>ProgramArguments</key><array><string>$HOME/bin/herdr-box-tunnel</string></array>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin</string></dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ThrottleInterval</key><integer>30</integer>
+  <key>StandardErrorPath</key><string>$HOME/Library/Logs/herdr-box-tunnel.log</string>
+  <key>StandardOutPath</key><string>$HOME/Library/Logs/herdr-box-tunnel.log</string>
+</dict></plist>
+EOF
+    launchctl bootout "gui/$UID/$label" 2>/dev/null
+    launchctl bootstrap "gui/$UID" "$plist" && echo "LaunchAgent $label running; log: ~/Library/Logs/herdr-box-tunnel.log"
+    ;;
+  --uninstall)
+    launchctl bootout "gui/$UID/$label" 2>/dev/null
+    rm -f "$plist" && echo "LaunchAgent $label removed"
+    ;;
+  *)
+    sed -n '2,/^$/s/^# \{0,1\}//p' "$0"
+    exit 2
+    ;;
+esac
