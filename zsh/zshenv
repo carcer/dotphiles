@@ -23,9 +23,16 @@ export DOTZSH="$HOME/.zsh"
 typeset -U path PATH
 path=("$HOME/.local/bin" $path)
 
-# User-level toolchains, when installed: the .NET SDK from dotnet-install.sh
+# User-level toolchains, when installed: .NET from dotnetup or dotnet-install.sh,
 # and Rust from rustup (installed with --no-modify-path, so it is wired here).
-if [[ -x "$HOME/.dotnet/dotnet" ]]; then
+# dotnetup (installed with `env set none`) keeps its SDKs under XDG data and
+# itself in ~/.dotnetup; `dotnetup update` patches them without root.
+dotnetup_root="${XDG_DATA_HOME:-$HOME/.local/share}/dotnetup/dotnet"
+[[ -x "$HOME/.dotnetup/dotnetup" ]] && path=("$HOME/.dotnetup" $path)
+if [[ -x "$dotnetup_root/dotnet" ]]; then
+  export DOTNET_ROOT="$dotnetup_root"
+  path=("$dotnetup_root" $path)
+elif [[ -x "$HOME/.dotnet/dotnet" ]]; then
   export DOTNET_ROOT="$HOME/.dotnet"
   path=("$HOME/.dotnet" $path)
 elif [[ -x /usr/share/dotnet/dotnet ]]; then
@@ -33,6 +40,7 @@ elif [[ -x /usr/share/dotnet/dotnet ]]; then
   # roslynk need DOTNET_ROOT to find it; ~/.dotnet holds only tools there.
   export DOTNET_ROOT=/usr/share/dotnet
 fi
+unset dotnetup_root
 [[ -d "$HOME/.dotnet/tools" ]] && path=("$HOME/.dotnet/tools" $path)
 [[ -d "$HOME/.cargo/bin" ]] && path=("$HOME/.cargo/bin" $path)
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
