@@ -41,7 +41,7 @@ Report it to Chris as a short table before changing anything.
 | Claude Code | `claude update` | `ssh sc-dev-01 'zsh -lc "claude update"'` (the box only self-updates while an interactive claude runs; `zsh -lc` puts `~/.local/bin` ahead of Andy's stale `/usr/bin/claude`) |
 | codex | `npm i -g @openai/codex@<ver>` under nvm's Node | same, via `zsh -lc`. First check no `npm install` is already running; afterwards check `codex --version`, the `@openai/codex-linux-x64` platform package and no `.codex-*` leftovers. An interrupted install leaves codex broken. |
 | roslynk (C# MCP server, NuGet global tool) | Keep the old version's files for the servers already running (Roslyn loads assemblies lazily, and `dotnet tool update` deletes the old folder): `S=~/.dotnet/tools/.store; cd ~; cp -cRp $S/roslynk/<old> $S/roslynk-<old>.keep; dotnet tool update -g roslynk; mv $S/roslynk-<old>.keep $S/roslynk/<old>`. Run it from `~`: the update moves `.store/roslynk`, and a cwd inside it fails with a GetCwd exception. | The same via `zsh -lc`, with `cp -al` (hardlinks) instead of `cp -cRp`. |
-| .NET | isen-ng casks: `brew upgrade --cask dotnet-sdk dotnet-sdk@8 dotnet-sdk9-0-300`. The .pkg needs sudo, so Chris runs it in a real terminal (not `!`, which has no stdin). The upgrade deletes the previous patch's SDK and runtime, so restart the roslynk daemon afterwards (see below) and tell whoever owns any long-running `dotnet run`. | Lane runners (sc-dev-01, chris-framework): the 10.0 `-bin` set comes from Chaotic-AUR, and 9.0 from the AUR (it isn't in Chaotic-AUR). CachyOS repos sit first in pacman.conf and carry older same-named `-bin` packages, so a plain `-Syu` never takes Chaotic-AUR's update: name the repo. Chris runs, per host and only when no test slot is held there: `sudo pacman -Sy chaotic-aur/dotnet-sdk-bin chaotic-aur/dotnet-runtime-bin chaotic-aur/dotnet-targeting-pack-bin chaotic-aur/aspnet-runtime-bin chaotic-aur/aspnet-targeting-pack-bin && yay -S aur/dotnet-sdk-9.0-bin aur/dotnet-runtime-9.0-bin aur/dotnet-targeting-pack-9.0-bin aur/aspnet-runtime-9.0-bin aur/aspnet-targeting-pack-9.0-bin`. Then check that `dotnet --list-runtimes` has the runtime the SDK needs (SDK 401 ↔ runtime 10.0.12): a split set breaks every build. |
+| .NET | isen-ng casks: `brew upgrade --cask dotnet-sdk dotnet-sdk@8 dotnet-sdk9-0-300`. The .pkg needs sudo, so Chris runs it in a real terminal (not `!`, which has no stdin). The upgrade deletes the previous patch's SDK and runtime, so restart the roslynk daemon afterwards (see below) and tell whoever owns any long-running `dotnet run`. | chris-framework (pilot, installed 2026-10-19): dotnetup, a user-level install with no root. Run `dotnetup update` only when no slot is held, then check `dotnet --list-sdks`/`--list-runtimes` in a fresh shell and restart the roslynk daemon. zshenv prefers `~/.local/share/dotnetup/dotnet` when it exists, so the pacman set below is only a fallback there; to roll back, move that folder aside and restart roslynk with `DOTNET_ROOT=/usr/share/dotnet`. Pacman (sc-dev-01, and the fallback on chris-framework): the 10.0 `-bin` set comes from Chaotic-AUR, and 9.0 from the AUR (it isn't in Chaotic-AUR). CachyOS repos sit first in pacman.conf and carry older same-named `-bin` packages, so a plain `-Syu` never takes Chaotic-AUR's update: name the repo. Since 2026-10-17 both hosts list the five 10.0 `-bin` names in pacman.conf `IgnorePkg` (so a `-Syyuu` can't downgrade them to CachyOS's build), and pacman asks "install anyway?" for each: answer Y. Chris runs, per host and only when no test slot is held there: `sudo pacman -Sy chaotic-aur/dotnet-sdk-bin chaotic-aur/dotnet-runtime-bin chaotic-aur/dotnet-targeting-pack-bin chaotic-aur/aspnet-runtime-bin chaotic-aur/aspnet-targeting-pack-bin && yay -S aur/dotnet-sdk-9.0-bin aur/dotnet-runtime-9.0-bin aur/dotnet-targeting-pack-9.0-bin aur/aspnet-runtime-9.0-bin aur/aspnet-targeting-pack-9.0-bin`. Then check that `dotnet --list-runtimes` has the runtime the SDK needs (SDK 401 ↔ runtime 10.0.12): a split set breaks every build. |
 
 roslynk runs one shared daemon per host (HTTP on 127.0.0.1:6502). Each lane's `roslynk stdio`
 is a thin client of it, so `get_solution_status` lists every lane's solutions. On 2026-10-14 the
@@ -60,9 +60,10 @@ restart:
   ENOSPC and silently stopped syncing files, and .NET 10 never closes those empty watchers on
   dispose (8,144 leaked inotify instances, so `open_solution` failed). An empty folder also can't
   be deleted by an update, unlike the old store folder.
-  - box: `systemctl --user stop roslynk-daemon; systemctl --user reset-failed roslynk-daemon;
+  - box: `R=$HOME/.local/share/dotnetup/dotnet; [[ -x $R/dotnet ]] || R=/usr/share/dotnet;
+    systemctl --user stop roslynk-daemon; systemctl --user reset-failed roslynk-daemon;
     mkdir -p ~/.local/state/roslynk && systemd-run --user --unit=roslynk-daemon
-    --working-directory=$HOME/.local/state/roslynk -E DOTNET_ROOT=/usr/share/dotnet
+    --working-directory=$HOME/.local/state/roslynk -E DOTNET_ROOT=$R
     -E DOTNET_hostBuilder__reloadConfigOnChange=false $HOME/.dotnet/tools/roslynk`.
     The transient unit stays loaded as `failed` after a stop, so `reset-failed` must run before
     `systemd-run` can reuse the name. `systemctl --user restart roslynk-daemon` keeps the folder and environment.
@@ -90,7 +91,8 @@ lanes unattended. (2026-10-13: codex hook v8 → v9 came with herdr 0.9.4.)
 
 Patch Tuesday (second Tuesday, ~18:00 UTC) is when .NET ships. dotnet/core's
 release notes have it first; brew casks and chaotic-aur trail by about a day, so say so
-and offer to recheck rather than installing from dotnet-install.sh.
+and offer to recheck rather than installing from dotnet-install.sh. dotnetup installs from Microsoft's
+feed directly, so on chris-framework `dotnetup update` can take the patch the same evening.
 
 Brew downloads over Starlink can crawl (17 KB/s seen). Run long ones in the
 background and check progress before assuming they're stuck.
