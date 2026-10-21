@@ -2,14 +2,19 @@
 """Append the processes holding the most RSS + swap to a CSV, so a slow leak on a
 lane runner can be traced to a lane. On 2026-10-21 systemd-oomd killed all of
 herdr-server on chris-framework at 63.7G RAM + 67.7G swap, and nothing recorded
-which process held it. estate-usage-sampler calls this every 5 minutes.
+which process held it. estate-usage-sampler calls this every minute.
 
     estate-top-mem [csv] [count]     (default ~/estate-metrics/top-mem.csv, 15)
 
 Columns: ts,pid,rss_mb,swap_mb,kind,cwd,cmdline. kind names the usual suspects:
 roslynk, testhost, dotnet, rustc, codex, claude, node, postgres, else "other".
+
+A test process (testhost, or a dotnet exec of a *.Tests assembly) above
+ESTATE_TESTHOST_ALERT_GB (default 20) is written to ~/estate-metrics/ALERT-testhost
+and logged to the journal; the file goes away once none is over. On 2026-10-21 one
+full Sechroom.Tests testhost reached 35 GB, so two at once exhaust the box.
 """
-import glob, os, sys, time
+import glob, os, subprocess, sys, time
 
 KINDS = [("roslynk", "roslynk"), ("testhost", "testhost"), ("rustc", "rustc"), ("codex", "codex"),
          ("claude", "claude"), ("postgres", "postgres"), ("dotnet", "dotnet"), ("node", "node")]
@@ -34,6 +39,19 @@ for status in glob.glob("/proc/[0-9]*/status"):
     kind = next((k for needle, k in KINDS if needle in cmd.split(" ", 2)[0] + " " + cmd[:200]), "other")
     clean = lambda s: s.replace(",", ";").replace("\n", " ")
     rows.append((rss + swap, f"{ts},{pid},{rss},{swap},{kind},{clean(cwd)},{clean(cmd[:120])}"))
+
+limit_mb = float(os.environ.get("ESTATE_TESTHOST_ALERT_GB", "20")) * 1024
+over = [line for total, line in rows
+        if total > limit_mb and (",testhost," in line or ".Tests" in line.split(",", 6)[6])]
+alert_path = os.path.join(os.path.dirname(out_path), "ALERT-testhost")
+if over:
+    with open(alert_path, "w") as a:
+        a.write("".join(f"test process over {limit_mb / 1024:.0f} GB: {l}\n" for l in over))
+    for l in over:
+        subprocess.run(["logger", "-p", "user.warning", "-t", "estate-top-mem",
+                        f"test process over {limit_mb / 1024:.0f} GB: {l}"], check=False)
+elif os.path.exists(alert_path):
+    os.remove(alert_path)
 
 new = not os.path.exists(out_path)
 with open(out_path, "a") as out:
