@@ -22,7 +22,7 @@ read -r pid cmd < <(python3 -c '
 import sys,json
 for p in json.load(sys.stdin)["result"]["process_info"]["foreground_processes"]:
     a=p["argv"]
-    if p["argv0"]=="claude" or any(x.endswith("/codex") or x=="codex" for x in a[:2]):
+    if (p.get("argv0") or a[0].rsplit("/",1)[-1])=="claude" or any(x.endswith("/codex") or x=="codex" for x in a[:2]):
         print(p["pid"], " ".join(a)); break' <<<"$procs")
 [ -z "${pid:-}" ] && { echo "$pane: agent process not found"; exit 1; }
 
@@ -74,7 +74,7 @@ for i in $(seq 1 30); do
 import sys,json
 for p in json.load(sys.stdin)["result"]["process_info"]["foreground_processes"]:
     a=p["argv"]
-    if p["argv0"]=="claude" or any(x.endswith("/codex") or x=="codex" for x in a[:2]):
+    if (p.get("argv0") or a[0].rsplit("/",1)[-1])=="claude" or any(x.endswith("/codex") or x=="codex" for x in a[:2]):
         print(p["pid"]); break' 2>/dev/null)
   [ -n "$new" ] && [ "$new" != "$pid" ] && break
   sleep 1
