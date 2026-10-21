@@ -6,7 +6,9 @@
 # (pass session-id when herdr doesn't know it, e.g. a codex lane started without hooks)
 # Refuses unless the agent is idle or done. Claude's "background work is
 # running" prompt is answered with "Move to background and exit", so the
-# estate's background tasks keep running. Prints old -> new pid, version, Node.
+# estate's background tasks keep running. They then run under Claude Code's
+# background daemon, which keeps the old environment (PATH/NVM_BIN): those tasks
+# stay on the old Node until they end, so check for them before removing it. Prints old -> new pid, version, Node.
 set -u
 pane=${1:?usage: herdr-cycle-agent <pane-id> [session-id]}
 sid_override=${2:-}
