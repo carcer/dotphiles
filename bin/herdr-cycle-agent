@@ -36,12 +36,17 @@ screen() { herdr pane read "$pane" --source visible --format text | grep -v '^[[
 
 # Someone (often Chris) may be typing into the pane: never append to their input.
 # The agent's input line is the last "❯ …" (Claude) or "› …" (codex) line on screen.
-pending=$(herdr pane read "$pane" --source visible --format text | grep -E '^[[:space:]]*(❯|›)' | tail -1 |
-  sed -E 's/^[[:space:]]*(❯|›)[[:space:]]*//; s/[[:space:]]+$//')
-case $pending in
-  ''|'Ask Codex to do anything'|'Implement {feature}') ;;
-  *) echo "$pane: input line not empty ('${pending:0:60}'), someone may be typing; skipped"; exit 2 ;;
-esac
+# Claude's prompt suggestions and codex's placeholder are drawn dim (ESC[2m), so
+# dim text there is not typing; anything else is.
+pending=$(herdr pane read "$pane" --source visible --format ansi | grep -aE $'(❯|›)' | tail -1 | python3 -c '
+import re,sys
+line=sys.stdin.read()
+line=re.split("❯|›",line,maxsplit=1)[-1]
+line=re.sub(r"\x1b\[2m.*?(\x1b\[(0|22)?m|$)","",line)   # dim runs: suggestions
+print(re.sub(r"\x1b\[[0-9;?]*[A-Za-z]","",line).strip())')
+if [ -n "$pending" ]; then
+  echo "$pane: input line not empty ('${pending:0:60}'), someone may be typing; skipped"; exit 2
+fi
 
 if [ "$kind" = claude ]; then
   cfg=$(envof "$pid" CLAUDE_CONFIG_DIR)
