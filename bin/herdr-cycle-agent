@@ -2,12 +2,14 @@
 # Restart one idle herdr agent onto the current Claude Code / codex / Node:
 # exit it, start a fresh login shell in its pane, then resume the same session
 # with the same account (CLAUDE_CONFIG_DIR) or codex arguments.
-#   herdr-cycle-agent <pane-id>
+#   herdr-cycle-agent <pane-id> [session-id]
+# (pass session-id when herdr doesn't know it, e.g. a codex lane started without hooks)
 # Refuses unless the agent is idle or done. Claude's "background work is
 # running" prompt is answered with "Move to background and exit", so the
 # estate's background tasks keep running. Prints old -> new pid, version, Node.
 set -u
-pane=${1:?usage: herdr-cycle-agent <pane-id>}
+pane=${1:?usage: herdr-cycle-agent <pane-id> [session-id]}
+sid_override=${2:-}
 
 info=$(herdr agent get "$pane" 2>/dev/null) || { echo "$pane: no agent"; exit 1; }
 read -r kind status sid < <(python3 -c '
@@ -15,6 +17,7 @@ import sys,json
 r=json.load(sys.stdin)["result"]; a=r.get("agent",r)
 print(a["agent"], a["agent_status"], (a.get("agent_session") or {}).get("value") or "-")' <<<"$info")
 case $status in idle|done) ;; *) echo "$pane: $kind is $status, skipped"; exit 2 ;; esac
+[ -n "$sid_override" ] && sid=$sid_override
 [ "$sid" = - ] && { echo "$pane: no session id, skipped"; exit 2; }
 
 procs=$(herdr pane process-info --pane "$pane")
@@ -87,3 +90,13 @@ done
 sleep 4
 echo "$pane $kind: $pid -> ${new:-NONE} node=$(envof "${new:-0}" NVM_BIN | grep -oE 'v[0-9.]+') ${cfg:+cfg=${cfg##*/}}${args:+args='$args'}"
 screen 4
+
+# Desk binds herdr panes by agent session id: a resume that lands on a different id
+# (e.g. after an account move) silently breaks that binding.
+now=$(herdr agent get "$pane" 2>/dev/null | python3 -c '
+import sys,json
+r=json.load(sys.stdin)["result"]; a=r.get("agent",r)
+print((a.get("agent_session") or {}).get("value") or "")' 2>/dev/null)
+if [ -n "$now" ] && [ "$now" != "$sid" ]; then
+  echo "$pane: WARNING session id changed $sid -> $now; if Desk binds this pane, re-attach it in Desk"
+fi

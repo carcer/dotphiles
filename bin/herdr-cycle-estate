@@ -1,0 +1,178 @@
+#!/usr/bin/env python3
+"""Cycle every lane of one estate on one host onto the current Claude Code / codex / Node.
+
+    herdr-cycle-estate --host sc-dev-01 --workspace w9 [--fleet conductor/fleet.json]
+                       [--dry-run] [--pace 20] [--max-load 0.75] [--skip w9:p9,...]
+                       [--include-coordinators] [--allow-unpushed] [--report-pane w11:pG]
+
+Lanes come from herdr's live agent list for that host and workspace. With --fleet, a
+fleet.json carrying roster.lanes[] (pane, host, role, name) adds names and roles, and
+conductor/planner lanes are skipped unless --include-coordinators. That roster shape is
+what `sechroom estate pull` (SBC-1718) will project, so the source can swap later; the
+estate-wide op itself is SBC-1777, and this script is its interim.
+
+Per lane, in order, one at a time:
+  - skip unless the agent is idle or done (herdr-cycle-agent also refuses typed input);
+  - skip if its worktree has uncommitted changes or commits not on its upstream;
+  - find the session id: herdr's, else for codex the newest ~/.codex/sessions rollout
+    whose cwd is the lane's;
+  - run herdr-cycle-agent on the host, which resumes the same session on the same
+    account (Claude) or with the same arguments (codex);
+  - then sleep --pace seconds and wait until load1 per core drops below --max-load,
+    because each relaunch starts its MCP servers fresh (13 back-to-back relaunches took
+    sc-dev-01 to load 39 on 2026-10-21).
+Results print as one line per lane. --report-pane sends the summary to the estate's
+conductor pane at the end (only if its input line is empty). --dry-run decides and
+prints, but cycles nothing.
+"""
+import argparse, json, os, shlex, subprocess, sys, time
+
+HERE = os.path.dirname(os.path.realpath(__file__))
+LOCAL = {"mac", "local", "localhost", os.uname().nodename.split(".")[0].lower()}
+
+
+def run(host, cmd, check=False, timeout=600):
+    """Run a shell command on host (locally for the Mac) and return stdout."""
+    argv = ["bash", "-c", cmd] if host in LOCAL else ["ssh", "-o", "BatchMode=yes", host, cmd]
+    p = subprocess.run(argv, capture_output=True, text=True, timeout=timeout)
+    if check and p.returncode:
+        sys.exit(f"{host}: {cmd!r} failed: {p.stderr.strip()}")
+    return p.returncode, p.stdout
+
+
+def herdr_json(host, args):
+    _, out = run(host, "herdr " + args, check=True)
+    return json.loads(out)["result"]
+
+
+def git_state(host, cwd):
+    """'' when clean and pushed, else a short reason."""
+    q = shlex.quote(cwd)
+    code, out = run(host, f"git -C {q} status --porcelain --branch 2>/dev/null")
+    if code:
+        return ""  # not a git checkout: nothing to lose
+    lines = out.splitlines()
+    head = lines[0] if lines else ""
+    if len(lines) > 1:
+        return f"{len(lines) - 1} uncommitted change(s)"
+    if "[ahead" in head:
+        return "unpushed commits (" + head.split("[", 1)[1].rstrip("]") + ")"
+    return ""
+
+
+def codex_session(host, cwd):
+    """Newest codex rollout whose session cwd is this lane's."""
+    script = r'''
+import glob, json, os, sys
+best = None
+for f in glob.glob(os.path.expanduser("~/.codex/sessions/*/*/*/*.jsonl")):
+    try:
+        meta = json.loads(open(f).readline())["payload"]
+    except Exception:
+        continue
+    if meta.get("cwd") == sys.argv[1]:
+        t = os.path.getmtime(f)
+        if not best or t > best[0]:
+            best = (t, meta["id"])
+print(best[1] if best else "")
+'''
+    _, out = run(host, f"python3 -c {shlex.quote(script)} {shlex.quote(cwd)}")
+    return out.strip()
+
+
+def wait_for_load(host, max_per_core, limit=600):
+    _, out = run(host, "echo $(cut -d' ' -f1 /proc/loadavg 2>/dev/null || sysctl -n vm.loadavg | tr -d '{}' | cut -d' ' -f2) $(nproc 2>/dev/null || sysctl -n hw.ncpu)")
+    start = time.time()
+    while True:
+        load, cores = out.split()
+        per_core = float(load) / int(cores)
+        if per_core < max_per_core or time.time() - start > limit:
+            return per_core
+        time.sleep(15)
+        _, out = run(host, "echo $(cut -d' ' -f1 /proc/loadavg 2>/dev/null || sysctl -n vm.loadavg | tr -d '{}' | cut -d' ' -f2) $(nproc 2>/dev/null || sysctl -n hw.ncpu)")
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--host", required=True, help="mac, sc-dev-01 or chris-framework")
+    ap.add_argument("--workspace", required=True, help="herdr workspace id on that host, e.g. w9")
+    ap.add_argument("--fleet", help="fleet.json with roster.lanes[] for names and roles")
+    ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--pace", type=int, default=20, help="seconds between lanes (default 20)")
+    ap.add_argument("--max-load", type=float, default=0.75, help="wait until load1/cores is below this (default 0.75)")
+    ap.add_argument("--skip", default="", help="comma-separated pane ids to leave alone")
+    ap.add_argument("--include-coordinators", action="store_true", help="also cycle conductor/planner lanes")
+    ap.add_argument("--allow-unpushed", action="store_true", help="cycle lanes with uncommitted or unpushed work")
+    ap.add_argument("--report-pane", help="conductor pane (on the Mac) to send the summary to")
+    a = ap.parse_args()
+    host = a.host.lower()
+    skip = {p for p in a.skip.split(",") if p}
+
+    roster = {}
+    if a.fleet:
+        f = json.load(open(os.path.expanduser(a.fleet)))
+        lanes = (f.get("roster") or {}).get("lanes") or []
+        if not lanes:
+            sys.exit(f"{a.fleet}: no roster.lanes[]; drop --fleet or point it at a roster")
+        roster = {l["pane"]: l for l in lanes if l.get("pane")}
+
+    agents = herdr_json(host, "agent list")["agents"]
+    agents = [g for g in agents if g["workspace_id"] == a.workspace]
+    if not agents:
+        sys.exit(f"{host}: no agents in workspace {a.workspace}")
+
+    # The per-lane script runs on the lane's host.
+    agent_script = os.path.join(HERE, "herdr-cycle-agent")
+    if host not in LOCAL:
+        subprocess.run(["scp", "-q", agent_script, f"{host}:/tmp/herdr-cycle-agent"], check=True)
+        agent_script = "/tmp/herdr-cycle-agent"
+
+    results = []
+    for g in agents:
+        pane, kind = g["pane_id"], g["agent"]
+        cwd = g.get("foreground_cwd") or g["cwd"]
+        lane = roster.get(pane, {})
+        name = g.get("name") or lane.get("name") or os.path.basename(cwd)
+        role = (lane.get("role") or "").lower()
+
+        def note(outcome):
+            results.append(f"{pane} {name}: {outcome}")
+            print(results[-1], flush=True)
+
+        if pane in skip:
+            note("skipped (--skip)"); continue
+        if role in ("conductor", "planner") and not a.include_coordinators:
+            note(f"skipped ({role}; --include-coordinators to cycle)"); continue
+        if g["agent_status"] not in ("idle", "done"):
+            note(f"skipped ({g['agent_status']})"); continue
+        dirty = git_state(host, cwd)
+        if dirty and not a.allow_unpushed:
+            note(f"skipped ({dirty})"); continue
+        sid = (g.get("agent_session") or {}).get("value") or ""
+        if not sid and kind == "codex":
+            sid = codex_session(host, cwd)
+        if not sid:
+            note("skipped (no session id)"); continue
+        if a.dry_run:
+            note(f"would cycle {kind} session {sid}"); continue
+
+        code, out = run(host, f"{agent_script} {shlex.quote(pane)} {shlex.quote(sid)}")
+        last = [l for l in out.splitlines() if l.startswith(pane)]
+        note(("cycled: " if code == 0 else f"FAILED ({code}): ") + (last[-1] if last else out.strip()[-200:]))
+        if code == 0:
+            time.sleep(a.pace)
+            per_core = wait_for_load(host, a.max_load)
+            print(f"  load1/core {per_core:.2f}", flush=True)
+
+    summary = f"[dotfiles -> {a.workspace} conductor] lane cycle on {host}{' (dry run)' if a.dry_run else ''}:\n" + "\n".join(results)
+    if a.report_pane and not a.dry_run:
+        rc, _ = run("mac", f"herdr pane read {shlex.quote(a.report_pane)} --source visible --format text | grep -E '^[[:space:]]*(❯|›)[[:space:]]*$' | tail -1 | grep -q .")
+        if rc == 0:
+            run("mac", f"herdr agent prompt {shlex.quote(a.report_pane)} {shlex.quote(summary)}")
+            print(f"summary sent to {a.report_pane}")
+        else:
+            print(f"{a.report_pane}: input line not empty, summary not sent")
+
+
+if __name__ == "__main__":
+    main()
