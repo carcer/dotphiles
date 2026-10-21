@@ -50,28 +50,28 @@ fi
 
 if [ "$kind" = claude ]; then
   cfg=$(envof "$pid" CLAUDE_CONFIG_DIR)
-  send /exit
+  relaunch="${cfg:+CLAUDE_CONFIG_DIR=$cfg }claude --resume $sid"
 else
   # codex args minus a trailing "resume <id>" and the node/launcher prefix
   args=$(sed -E 's#^(node )?[^ ]*codex ?##; s# ?resume [^ ]+.*$##' <<<"$cmd")
-  send /quit
+  relaunch="codex ${args:+$args }resume $sid"
 fi
+echo "$pane: cycling $kind $pid; to recover by hand: exec \$SHELL -l; $relaunch"
+if [ "$kind" = claude ]; then send /exit; else send /quit; fi
 
 for i in $(seq 1 40); do
   kill -0 "$pid" 2>/dev/null || break
   if [ "$kind" = claude ] && screen 12 | grep -q 'Move to background and exit'; then
     herdr pane send-keys "$pane" Down Enter >/dev/null
   fi
+  # codex's first Enter on "/quit" picks it from the command menu; the second runs it
+  if [ "$kind" = codex ] && [ "$i" = 3 ]; then herdr pane send-keys "$pane" Enter >/dev/null; fi
   sleep 1
 done
 if kill -0 "$pid" 2>/dev/null; then echo "$pane: $pid still running, not relaunched"; screen 10; exit 1; fi
 
 sleep 2; send 'exec $SHELL -l'; sleep 5
-if [ "$kind" = claude ]; then
-  send "${cfg:+CLAUDE_CONFIG_DIR=$cfg }claude --resume $sid"
-else
-  send "codex ${args:+$args }resume $sid"
-fi
+send "$relaunch"
 
 new=
 for i in $(seq 1 30); do
