@@ -88,6 +88,16 @@ for p in json.load(sys.stdin)["result"]["process_info"]["foreground_processes"]:
   sleep 1
 done
 sleep 4
+# A codex lane whose MCP tools/list times out (sechroom-ocd under load, required =
+# true) exits back to the shell after starting. Wait until it shows its prompt, or
+# report that it fell out (startup_timeout_sec is 120).
+if [ "$kind" = codex ] && [ -n "$new" ]; then
+  for i in $(seq 1 30); do
+    kill -0 "$new" 2>/dev/null || { echo "$pane codex: FAILED, $new exited during startup (MCP timeout?); recover with: $relaunch"; screen 6; exit 1; }
+    screen 3 | grep -q 'for agents\|? for shortcuts' && break
+    sleep 5
+  done
+fi
 echo "$pane $kind: $pid -> ${new:-NONE} node=$(envof "${new:-0}" NVM_BIN | grep -oE 'v[0-9.]+') ${cfg:+cfg=${cfg##*/}}${args:+args='$args'}"
 screen 4
 
