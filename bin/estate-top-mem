@@ -38,11 +38,11 @@ for status in glob.glob("/proc/[0-9]*/status"):
         continue
     kind = next((k for needle, k in KINDS if needle in cmd.split(" ", 2)[0] + " " + cmd[:200]), "other")
     clean = lambda s: s.replace(",", ";").replace("\n", " ")
-    rows.append((rss + swap, f"{ts},{pid},{rss},{swap},{kind},{clean(cwd)},{clean(cmd[:120])}"))
+    is_test = kind == "testhost" or ".Tests" in cmd or ".Tests/" in cwd
+    rows.append((rss + swap, f"{ts},{pid},{rss},{swap},{kind},{clean(cwd)},{clean(cmd[:120])}", is_test))
 
 limit_mb = float(os.environ.get("ESTATE_TESTHOST_ALERT_GB", "20")) * 1024
-over = [line for total, line in rows
-        if total > limit_mb and (",testhost," in line or ".Tests" in line.split(",", 6)[6])]
+over = [line for total, line, is_test in rows if is_test and total > limit_mb]
 alert_path = os.path.join(os.path.dirname(out_path), "ALERT-testhost")
 if over:
     with open(alert_path, "w") as a:
@@ -57,5 +57,5 @@ new = not os.path.exists(out_path)
 with open(out_path, "a") as out:
     if new:
         out.write("ts,pid,rss_mb,swap_mb,kind,cwd,cmdline\n")
-    for _, line in sorted(rows, reverse=True)[:count]:
+    for _, line, _ in sorted(rows, reverse=True)[:count]:
         out.write(line + "\n")
