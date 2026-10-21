@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Re-authorise a Codex lane's OAuth MCP server (sechroom-ocd / sechroom) in one step.
+#   codex-mcp-login <herdr-pane-id | checkout-dir> [server]
+# Resolves the lane's checkout from its herdr pane, picks the OAuth server from the
+# nearest .codex/config.toml between the checkout and the git root (the one with a
+# url, preferring a sechroom* name), and runs `codex mcp login` there. On the Mac the
+# browser opens and codex catches the 127.0.0.1 callback itself: nothing to paste.
+# Over ssh (no local browser) it falls back to --no-browser, which needs the paste.
+set -euo pipefail
+target=${1:?usage: codex-mcp-login <herdr-pane-id | checkout-dir> [server]}
+
+if [ -d "$target" ]; then
+  dir=$target
+else
+  dir=$(herdr pane get "$target" | python3 -c '
+import sys,json; r=json.load(sys.stdin)["result"]; p=r.get("pane",r)
+print(p.get("foreground_cwd") or p["cwd"])')
+fi
+cd "$dir"
+
+server=${2:-}
+if [ -z "$server" ]; then
+  root=$(git rev-parse --show-toplevel 2>/dev/null || echo "$dir")
+  d=$dir
+  while :; do
+    if [ -f "$d/.codex/config.toml" ]; then
+      server=$(python3 - "$d/.codex/config.toml" <<'EOF'
+import sys, tomllib
+servers = tomllib.load(open(sys.argv[1], "rb")).get("mcp_servers", {})
+names = [n for n, s in servers.items() if isinstance(s, dict) and s.get("url")]
+names.sort(key=lambda n: (not n.startswith("sechroom"), n))
+print(names[0] if names else "")
+EOF
+)
+      [ -n "$server" ] && break
+    fi
+    [ "$d" = "$root" ] || [ "$d" = / ] && break
+    d=$(dirname "$d")
+  done
+fi
+[ -z "$server" ] && { echo "no OAuth MCP server found in a .codex/config.toml above $dir" >&2; exit 1; }
+
+echo "checkout: $dir"
+echo "server:   $server"
+if [ -n "${SSH_CONNECTION:-}" ] || [ "$(uname)" != Darwin ]; then
+  echo "no local browser: open the URL on the Mac, then paste the 127.0.0.1 callback URL back here"
+  exec codex mcp login --no-browser "$server"
+fi
+exec codex mcp login "$server"

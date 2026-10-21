@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+# Restart one idle herdr agent onto the current Claude Code / codex / Node:
+# exit it, start a fresh login shell in its pane, then resume the same session
+# with the same account (CLAUDE_CONFIG_DIR) or codex arguments.
+#   herdr-cycle-agent <pane-id>
+# Refuses unless the agent is idle or done. Claude's "background work is
+# running" prompt is answered with "Move to background and exit", so the
+# estate's background tasks keep running. Prints old -> new pid, version, Node.
+set -u
+pane=${1:?usage: herdr-cycle-agent <pane-id>}
+
+info=$(herdr agent get "$pane" 2>/dev/null) || { echo "$pane: no agent"; exit 1; }
+read -r kind status sid < <(python3 -c '
+import sys,json
+r=json.load(sys.stdin)["result"]; a=r.get("agent",r)
+print(a["agent"], a["agent_status"], (a.get("agent_session") or {}).get("value") or "-")' <<<"$info")
+case $status in idle|done) ;; *) echo "$pane: $kind is $status, skipped"; exit 2 ;; esac
+[ "$sid" = - ] && { echo "$pane: no session id, skipped"; exit 2; }
+
+procs=$(herdr pane process-info --pane "$pane")
+read -r pid cmd < <(python3 -c '
+import sys,json
+for p in json.load(sys.stdin)["result"]["process_info"]["foreground_processes"]:
+    a=p["argv"]
+    if p["argv0"]=="claude" or any(x.endswith("/codex") or x=="codex" for x in a[:2]):
+        print(p["pid"], " ".join(a)); break' <<<"$procs")
+[ -z "${pid:-}" ] && { echo "$pane: agent process not found"; exit 1; }
+
+envof() {  # print one variable from a process's environment
+  if [ -r /proc/$1/environ ]; then tr '\0' '\n' </proc/$1/environ | sed -n "s/^$2=//p"
+  else ps eww -o command= -p "$1" | grep -oE "(^| )$2=[^ ]+" | sed "s/^ *$2=//"; fi
+}
+
+send() { herdr pane send-text "$pane" "$1" >/dev/null; herdr pane send-keys "$pane" Enter >/dev/null; }
+screen() { herdr pane read "$pane" --source visible --format text | grep -v '^[[:space:]]*$' | tail -${1:-6}; }
+
+# Someone (often Chris) may be typing into the pane: never append to their input.
+# The agent's input line is the last "❯ …" (Claude) or "› …" (codex) line on screen.
+pending=$(herdr pane read "$pane" --source visible --format text | grep -E '^[[:space:]]*(❯|›)' | tail -1 |
+  sed -E 's/^[[:space:]]*(❯|›)[[:space:]]*//; s/[[:space:]]+$//')
+case $pending in
+  ''|'Ask Codex to do anything'|'Implement {feature}') ;;
+  *) echo "$pane: input line not empty ('${pending:0:60}'), someone may be typing; skipped"; exit 2 ;;
+esac
+
+if [ "$kind" = claude ]; then
+  cfg=$(envof "$pid" CLAUDE_CONFIG_DIR)
+  send /exit
+else
+  # codex args minus a trailing "resume <id>" and the node/launcher prefix
+  args=$(sed -E 's#^(node )?[^ ]*codex ?##; s# ?resume [^ ]+.*$##' <<<"$cmd")
+  send /quit
+fi
+
+for i in $(seq 1 40); do
+  kill -0 "$pid" 2>/dev/null || break
+  if [ "$kind" = claude ] && screen 12 | grep -q 'Move to background and exit'; then
+    herdr pane send-keys "$pane" Down Enter >/dev/null
+  fi
+  sleep 1
+done
+if kill -0 "$pid" 2>/dev/null; then echo "$pane: $pid still running, not relaunched"; screen 10; exit 1; fi
+
+sleep 2; send 'exec $SHELL -l'; sleep 5
+if [ "$kind" = claude ]; then
+  send "${cfg:+CLAUDE_CONFIG_DIR=$cfg }claude --resume $sid"
+else
+  send "codex ${args:+$args }resume $sid"
+fi
+
+new=
+for i in $(seq 1 30); do
+  new=$(herdr pane process-info --pane "$pane" | python3 -c '
+import sys,json
+for p in json.load(sys.stdin)["result"]["process_info"]["foreground_processes"]:
+    a=p["argv"]
+    if p["argv0"]=="claude" or any(x.endswith("/codex") or x=="codex" for x in a[:2]):
+        print(p["pid"]); break' 2>/dev/null)
+  [ -n "$new" ] && [ "$new" != "$pid" ] && break
+  sleep 1
+done
+sleep 4
+echo "$pane $kind: $pid -> ${new:-NONE} node=$(envof "${new:-0}" NVM_BIN | grep -oE 'v[0-9.]+') ${cfg:+cfg=${cfg##*/}}${args:+args='$args'}"
+screen 4
