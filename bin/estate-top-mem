@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+"""Append the processes holding the most RSS + swap to a CSV, so a slow leak on a
+lane runner can be traced to a lane. On 2026-10-21 systemd-oomd killed all of
+herdr-server on chris-framework at 63.7G RAM + 67.7G swap, and nothing recorded
+which process held it. estate-usage-sampler calls this every minute.
+
+    estate-top-mem [csv] [count]     (default ~/estate-metrics/top-mem.csv, 15)
+
+Columns: ts,pid,rss_mb,swap_mb,kind,cwd,cmdline. kind names the usual suspects:
+roslynk, testhost, dotnet, rustc, codex, claude, node, postgres, else "other".
+
+A test process (testhost, or a dotnet exec of a *.Tests assembly) above
+ESTATE_TESTHOST_ALERT_GB (default 20) is written to ~/estate-metrics/ALERT-testhost
+and logged to the journal; the file goes away once none is over. On 2026-10-21 one
+full Sechroom.Tests testhost reached 35 GB, so two at once exhaust the box.
+"""
+import glob, os, subprocess, sys, time
+
+KINDS = [("roslynk", "roslynk"), ("testhost", "testhost"), ("rustc", "rustc"), ("codex", "codex"),
+         ("claude", "claude"), ("postgres", "postgres"), ("dotnet", "dotnet"), ("node", "node")]
+
+out_path = os.path.expanduser(sys.argv[1] if len(sys.argv) > 1 else "~/estate-metrics/top-mem.csv")
+count = int(sys.argv[2]) if len(sys.argv) > 2 else 15
+ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+rows = []
+for status in glob.glob("/proc/[0-9]*/status"):
+    pid = status.split("/")[2]
+    try:
+        fields = dict(l.split(":", 1) for l in open(status) if l.startswith(("VmRSS", "VmSwap")))
+        rss = int(fields.get("VmRSS", "0 kB").split()[0]) // 1024
+        swap = int(fields.get("VmSwap", "0 kB").split()[0]) // 1024
+        if rss + swap < 256:
+            continue
+        cwd = os.readlink(f"/proc/{pid}/cwd").split("/projects/")[-1]
+        cmd = open(f"/proc/{pid}/cmdline", "rb").read().replace(b"\0", b" ").decode(errors="replace").strip()
+    except (OSError, ValueError):
+        continue
+    kind = next((k for needle, k in KINDS if needle in cmd.split(" ", 2)[0] + " " + cmd[:200]), "other")
+    clean = lambda s: s.replace(",", ";").replace("\n", " ")
+    is_test = kind == "testhost" or ".Tests" in cmd or ".Tests/" in cwd
+    rows.append((rss + swap, f"{ts},{pid},{rss},{swap},{kind},{clean(cwd)},{clean(cmd[:120])}", is_test))
+
+limit_mb = float(os.environ.get("ESTATE_TESTHOST_ALERT_GB", "20")) * 1024
+over = [line for total, line, is_test in rows if is_test and total > limit_mb]
+alert_path = os.path.join(os.path.dirname(out_path), "ALERT-testhost")
+if over:
+    with open(alert_path, "w") as a:
+        a.write("".join(f"test process over {limit_mb / 1024:.0f} GB: {l}\n" for l in over))
+    for l in over:
+        subprocess.run(["logger", "-p", "user.warning", "-t", "estate-top-mem",
+                        f"test process over {limit_mb / 1024:.0f} GB: {l}"], check=False)
+elif os.path.exists(alert_path):
+    os.remove(alert_path)
+
+new = not os.path.exists(out_path)
+with open(out_path, "a") as out:
+    if new:
+        out.write("ts,pid,rss_mb,swap_mb,kind,cwd,cmdline\n")
+    for _, line, _ in sorted(rows, reverse=True)[:count]:
+        out.write(line + "\n")

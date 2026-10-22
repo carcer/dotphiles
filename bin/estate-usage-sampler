@@ -37,6 +37,7 @@ gb() { awk -v b="$1" 'BEGIN { printf "%.1f", b / 2^30 }'; }
 free_bytes() { df -B1 --output=avail "$1" 2>/dev/null | tail -1 | tr -d ' '; }
 
 prev=$(awk '/^high /{print $2}' "$cg/memory.events")
+tick=0
 while :; do
   mem=$(awk '/^(anon|file) /{printf "%.2f,", $2/2^30}' "$cg/memory.stat")
   cur=$(awk '{printf "%.2f", $1/2^30}' "$cg/memory.current")
@@ -89,5 +90,7 @@ while :; do
     echo "<5>estate-usage-sampler: all checks clear" >&2
   fi
 
+  # Every minute, the biggest processes by RSS + swap into top-mem.csv (estate-top-mem).
+  (( ++tick % (60 / interval) == 0 )) && "$HOME/bin/estate-top-mem" "$dir/top-mem.csv"
   sleep "$interval"
 done
