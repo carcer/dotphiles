@@ -11,12 +11,19 @@
 #   herdr-box-tunnel            run the tunnel in the foreground (what launchd runs)
 #   herdr-box-tunnel --install  run it as a LaunchAgent (--uninstall removes it)
 #
-# HERDR_TUNNEL_HOST picks the box (default sc-dev-01).
+# HERDR_TUNNEL_HOST picks the box (default sc-dev-01). Each box gets its own
+# LaunchAgent (codes.ocd.herdr-box-tunnel for sc-dev-01, codes.ocd.herdr-box-tunnel-<host>
+# for any other) and its own key in authorized_keys. chris-framework (2026-10-24):
+#   HERDR_TUNNEL_HOST=chris-framework herdr-box-tunnel --install
+# Stopgap until SBC-2034 (`sechroom fleet send`, server-relayed) lands.
 
 set -uo pipefail
 host=${HERDR_TUNNEL_HOST:-sc-dev-01}
 label=codes.ocd.herdr-box-tunnel
+[ "$host" = sc-dev-01 ] || label=$label-$host
 plist=~/Library/LaunchAgents/$label.plist
+logname=herdr-box-tunnel
+[ "$host" = sc-dev-01 ] || logname=$logname-$host
 
 case ${1:-} in
   "")
@@ -33,16 +40,16 @@ case ${1:-} in
 <plist version="1.0"><dict>
   <key>Label</key><string>$label</string>
   <key>ProgramArguments</key><array><string>$HOME/bin/herdr-box-tunnel</string></array>
-  <key>EnvironmentVariables</key><dict><key>PATH</key><string>/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin</string></dict>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin</string><key>HERDR_TUNNEL_HOST</key><string>$host</string></dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
   <key>ThrottleInterval</key><integer>30</integer>
-  <key>StandardErrorPath</key><string>$HOME/Library/Logs/herdr-box-tunnel.log</string>
-  <key>StandardOutPath</key><string>$HOME/Library/Logs/herdr-box-tunnel.log</string>
+  <key>StandardErrorPath</key><string>$HOME/Library/Logs/$logname.log</string>
+  <key>StandardOutPath</key><string>$HOME/Library/Logs/$logname.log</string>
 </dict></plist>
 EOF
     launchctl bootout "gui/$UID/$label" 2>/dev/null
-    launchctl bootstrap "gui/$UID" "$plist" && echo "LaunchAgent $label running; log: ~/Library/Logs/herdr-box-tunnel.log"
+    launchctl bootstrap "gui/$UID" "$plist" && echo "LaunchAgent $label running; log: ~/Library/Logs/$logname.log"
     ;;
   --uninstall)
     launchctl bootout "gui/$UID/$label" 2>/dev/null
