@@ -41,3 +41,5 @@ task/task/*.data
 
 aws/credentials
 gitversion/gitversion
+.sechroom/
+__pycache__/
