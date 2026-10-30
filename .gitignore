@@ -46,3 +46,5 @@ expressvpn
 zsh/secrets.local
 # per-host link created by deploy/linux (see sway/hosts/)
 sway/host.conf
+.sechroom/
+__pycache__/
