@@ -54,12 +54,12 @@ if [[ "$OSTYPE" == linux* ]]; then
   [[ -z "${LC_ALL:-}" ]] && export LANG=en_GB.UTF-8 LC_ALL=en_GB.UTF-8
 fi
 
-# sc-dev-01 only: lock slots for the estates that share the box. Three heavy
-# dotnet-test slots (sechroom #3240; raised from 2 on 2026-10-03 as a trial,
-# "keep 3 open and see how things go") and two light dotnet-build/codegen slots
-# (#3285). Watch ~/estate-metrics/box-usage.csv: in Sept, 3 test slots hit the
-# 44G soft cap in ~57% of samples vs ~10% at 2. Drop back to 2 if it thrashes.
-[[ "${HOST%%.*}" == sc-dev-01 ]] && export DPT_DOTNET_SLOTS="${DPT_DOTNET_SLOTS:-3}"
+# sc-dev-01 only: lock slots for the estates that share the box. One heavy
+# dotnet-test slot (down from a trial of 3 in mid-October) and two light
+# dotnet-build/codegen slots (#3285). Stay at 1 while Freedivr's dpt-itlock.sh
+# lacks the reclaim mutex: integration-host-lock.sh requires it of every estate
+# on a host before DPT_DOTNET_SLOTS>1. This box's ~/.zshenv is a standalone copy.
+[[ "${HOST%%.*}" == sc-dev-01 ]] && export DPT_DOTNET_SLOTS="${DPT_DOTNET_SLOTS:-1}"
 [[ "${HOST%%.*}" == sc-dev-01 ]] && export DPT_DOTNET_BUILD_SLOTS="${DPT_DOTNET_BUILD_SLOTS:-2}"
 # chris-framework, the second lane runner (sechroom and ABCS from 2026-10-16;
 # 62 GB, 24 threads): two test and two build slots, its own lock, separate from
