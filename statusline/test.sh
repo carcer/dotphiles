@@ -217,6 +217,21 @@ printf '%s' "$cached_rendered" | grep -F 'Codex Proxy' >/dev/null
 ! printf '%s' "$cached_rendered" | grep -F '53% wk' >/dev/null
 ! printf '%s' "$cached_rendered" | grep -F 'ANT' >/dev/null
 
+# The sechroom statusline hook gets the exact input in the background and
+# changes nothing on the line; without sechroom on PATH the line still renders.
+cat > "$fixture/bin/sechroom" <<EOF
+#!/usr/bin/env bash
+[ "\$*" = "hook claude-statusline" ] && cat > "$fixture/cache/hook-input"
+EOF
+chmod +x "$fixture/bin/sechroom"
+plain_rendered=$(printf '%s' "$status_input" | PATH="/usr/bin:/bin:$(dirname "$(command -v jq)")" \
+  CODEX_RATE_LIMIT_DISABLE_REFRESH=1 "$script_dir/claude-statusline.sh")
+hooked_rendered=$(printf '%s' "$status_input" | PATH="$fixture/bin:$PATH" \
+  CODEX_RATE_LIMIT_DISABLE_REFRESH=1 "$script_dir/claude-statusline.sh")
+[ "$plain_rendered" = "$hooked_rendered" ]
+for _ in 1 2 3 4 5 6 7 8 9 10; do [ -s "$fixture/cache/hook-input" ] && break; sleep 0.2; done
+[ "$(cat "$fixture/cache/hook-input")" = "$status_input" ]
+
 jq '.fetchedAt = 0' "$rate_limit_cache" > "$fixture/cache/stale.json"
 test -z "$(CODEX_RATE_LIMIT_DISABLE_REFRESH=1 \
   CODEX_RATE_LIMIT_CACHE="$fixture/cache/stale.json" \

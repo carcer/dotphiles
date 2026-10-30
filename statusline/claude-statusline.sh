@@ -9,6 +9,13 @@ set -u
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 input=$(cat)
 
+# Hand the same JSON to sechroom's estate reporter (SBC-2156), which records
+# only context and usage numbers. It runs detached with its output discarded,
+# so the line never waits on Node and still renders without sechroom.
+if command -v sechroom >/dev/null 2>&1; then
+  ({ printf '%s' "$input" | sechroom hook claude-statusline; } >/dev/null 2>&1 &)
+fi
+
 if ! printf '%s' "$input" | jq -e . >/dev/null 2>&1; then
   printf 'statusline: Claude Code sent invalid JSON\n' >&2
   exit 1
