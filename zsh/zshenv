@@ -21,3 +21,15 @@ export DOTZSH="$HOME/.zsh"
 #source "$DOTZSH/env.zsh"
 
 # Customize to your needs...
+
+# Lane identity for sechroom's harness telemetry (SBC-2069): its collector stays
+# silent without both. The estate comes from the checkout the pane starts in, and
+# Freedivr and ac are left unset. Shells started later in a lane inherit it.
+case "${HOST%%.*}" in
+  (sc-dev-01|chris-framework) export SECHROOM_HOST="${HOST%%.*}" ;;
+  (Chriss-MacBook-Air) export SECHROOM_HOST=chris-mac ;;
+esac
+case "$PWD/" in
+  ("$HOME"/development/projects/abcs/*) export SECHROOM_ESTATE=abcs ;;
+  ("$HOME"/development/projects/sechroom-estate/*) export SECHROOM_ESTATE=sechroom ;;
+esac
