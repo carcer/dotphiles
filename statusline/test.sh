@@ -190,7 +190,8 @@ jq -e '
   and (.rateLimits | keys | sort) == ["primary", "secondary"]
   and (keys | sort) == ["fetchedAt", "rateLimits"]
   and (.fetchedAt | type == "number")' "$rate_limit_cache" >/dev/null
-test "$(stat -f '%Lp' "$rate_limit_cache" 2>/dev/null || stat -c '%a' "$rate_limit_cache")" = 600
+# GNU stat first: on Linux `stat -f` means filesystem status and succeeds.
+test "$(stat -c '%a' "$rate_limit_cache" 2>/dev/null || stat -f '%Lp' "$rate_limit_cache")" = 600
 
 status_input='{"model":{"id":"claude-fable-5","display_name":"Fable 5","provider":"anthropic"},"workspace":{"current_dir":"/tmp"},"context_window":{"context_window_size":200000,"total_input_tokens":1000,"used_percentage":1},"rate_limits":{"five_hour":{"used_percentage":14.000000000000002},"seven_day":{"used_percentage":52.99999999999999,"resets_at":1893456000}}}'
 for settings in "$fixture/claude/settings.json" "$fixture/ocd/settings.json" "$fixture/abcs/settings.json"; do
