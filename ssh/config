@@ -14,3 +14,14 @@ Host youthful-indiscretion
   LocalForward 6001 localhost:6001
 
 
+
+# Mac herdr, via the reverse tunnel the Mac keeps up (bin/herdr-box-tunnel on the Mac).
+# Key lives outside this repo.
+Host chris-mac
+  HostName 127.0.0.1
+  Port 2222
+  HostKeyAlias chris-mac
+  User chris
+  IdentityFile ~/.config/herdr-mac/herdr_mac
+  IdentitiesOnly yes
+  UserKnownHostsFile ~/.config/herdr-mac/known_hosts

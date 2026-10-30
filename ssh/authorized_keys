@@ -9,3 +9,6 @@
 
 # Add your ssh key here
 
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPCgZ9rYStBvjwaPjEt3fc6lATzFtUKw4Z0GN3rToa8v chris@mac
+# sc-dev-01, from its LAN (10.0.5.0/24) or its tailnet address (100.64.241.35).
+from="10.0.5.0/24,100.64.241.35" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICkwpHq5jdAaq05qKkWWlMefkao4x5eX8o/WuRBHlqhF sc-dev-01
