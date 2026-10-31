@@ -25,6 +25,7 @@ case ${1:-} in
         cat "$f"; echo
         rm -f "$f"
       done
+      echo   # box-oauth skips blank lines; once its ssh is gone this write ends the loop
       sleep 1
     done
     ;;
