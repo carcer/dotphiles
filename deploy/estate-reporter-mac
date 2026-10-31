@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Run the estate reporters as launchd agents on the Mac:
+#   deploy/estate-reporter-mac <estate>...
+# Safe to run again: each agent is replaced. systemd's estate-reporter@.service
+# does this job on the runners.
+
+set -euo pipefail
+
+for estate in "$@"; do
+  label=com.ocd.estate-reporter.$estate
+  plist=$HOME/Library/LaunchAgents/$label.plist
+  cat > "$plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>$label</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>$HOME/.dotfiles/bin/estate-reporter</string>
+    <string>$estate</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ThrottleInterval</key><integer>30</integer>
+  <key>StandardErrorPath</key><string>$HOME/.cache/sechroom-reporter/$estate.err</string>
+</dict>
+</plist>
+PLIST
+  launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
+  launchctl bootstrap "gui/$(id -u)" "$plist"
+done

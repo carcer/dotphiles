@@ -1,0 +1,10 @@
+[Unit]
+Description=Post this host's %i lane state to Sechroom every minute
+
+[Service]
+ExecStart=%h/.dotfiles/bin/estate-reporter %i
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=default.target
