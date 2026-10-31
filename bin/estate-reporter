@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Post this host's lane state for one estate to Sechroom every minute (SBC-1977):
+#   estate-reporter <estate> [host]
+#
+# One-shot per pass rather than `sechroom estate report --watch`, which exits on
+# the first failed post. Run as a supervised service, not from a lane's shell:
+# estate-reporter@.service on the runners, deploy/estate-reporter-mac on the Mac.
+# It sets its own PATH because neither gives it a shell's.
+#
+# Three auth failures in a row write ~/estate-metrics/REPORTER-ALERT-<estate> and
+# warn on stderr; the file goes away after the next good post. Conductors can test
+# for it in their loops. A network failure is logged and retried, never alerted.
+
+set -uo pipefail
+
+estate=${1:?usage: estate-reporter <estate> [host]}
+host=${2:-}
+if [[ -z $host ]]; then
+  case "$(hostname -s)" in
+    Chriss-MacBook-Air) host=chris-mac ;;
+    *) host=$(hostname -s) ;;
+  esac
+fi
+
+nvm_bin=$(ls -d "$HOME"/.nvm/versions/node/*/bin 2>/dev/null | sort -V | tail -1)
+export PATH="${nvm_bin:+$nvm_bin:}$HOME/.local/bin:/opt/homebrew/bin:$PATH"
+
+dir=$HOME/.cache/sechroom-reporter
+log=$dir/$estate.log
+alert=$HOME/estate-metrics/REPORTER-ALERT-$estate
+interval=${ESTATE_REPORTER_INTERVAL:-60}
+# The runners keep a reporter install apart from the global CLI.
+bin=${ESTATE_REPORTER_BIN:-$dir/node_modules/.bin/sechroom}
+[[ -x $bin ]] || bin=$(command -v sechroom) || { echo "estate-reporter: no sechroom CLI" >&2; exit 1; }
+
+mkdir -p "$dir" "${alert%/*}"
+# Fixed so the tenant can't follow whichever checkout a shell happened to be in.
+cd "$dir" || exit 1
+
+auth_failures=0
+while true; do
+  ts=$(date -u +%FT%TZ)
+  out=$("$bin" --tenant ocd estate report "$estate" --host "$host" 2>&1)
+  rc=$?
+  echo "$ts rc=$rc $(printf '%s' "$out" | tail -3 | tr '\n' ' ' | cut -c1-300)" >> "$log"
+  [ "$(wc -l < "$log")" -gt 2000 ] && tail -1000 "$log" > "$log.new" && mv "$log.new" "$log"
+
+  if [[ $rc -eq 0 ]]; then
+    auth_failures=0
+    rm -f "$alert"
+  elif printf '%s' "$out" | grep -qiE 'unauthenticated|session expired|re-authenticate|sechroom login'; then
+    auth_failures=$((auth_failures + 1))
+    if [[ $auth_failures -ge 3 ]]; then
+      echo "$ts $host: $auth_failures auth failures reporting $estate; try: sechroom login" | tee "$alert" >&2
+    fi
+  fi
+  sleep "$interval"
+done
