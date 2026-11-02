@@ -32,4 +32,5 @@ esac
 case "$PWD/" in
   ("$HOME"/development/projects/abcs/*) export SECHROOM_ESTATE=abcs ;;
   ("$HOME"/development/projects/sechroom-estate/*) export SECHROOM_ESTATE=sechroom ;;
+  ("$HOME"/development/projects/didactic-palm-tree-estate/*) export SECHROOM_ESTATE=freedivr ;;
 esac
