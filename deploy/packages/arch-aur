@@ -3,7 +3,6 @@ visual-studio-code-bin
 jetbrains-toolbox
 docker-rootless-extras
 slack-desktop
-postman-bin
 powershell-bin
 expressvpn
 # .NET 9.0 for lane runners (not in Chaotic-AUR; the 10.0 set comes from there).
