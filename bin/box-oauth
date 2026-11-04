@@ -11,6 +11,10 @@
 #                         e.g. after choosing Authenticate in /mcp; looks on
 #                         each box in turn (or name one: BOX_OAUTH_HOST=...)
 #   box-oauth <url>       a link copied by hand
+#   box-oauth <callback>  the http://localhost:<port>/callback?... link the
+#                         browser failed to load after you approved without a
+#                         forward: hands it to whichever box is still waiting
+#                         on that port
 #   box-oauth --watch     open each link any box's BROWSER hook (oauth-to-mac)
 #                         queues; runs for good, reconnecting per box
 #   box-oauth --install   run --watch as a LaunchAgent (--uninstall removes it)
@@ -76,7 +80,28 @@ sign_in() {
   log "closed the forward for port $port"
 }
 
+# The browser already has the code but went to the Mac's localhost: replay the
+# callback on the box that is still listening. The link goes over stdin, never
+# on a command line.
+deliver_callback() {
+  local url=$1 port code host
+  port=$(python3 -I -c 'import sys, urllib.parse as u; print(u.urlsplit(sys.argv[1]).port or "")' "$url")
+  [[ -n $port ]] || { log "callback link has no port"; return 1; }
+  for host in "${hosts[@]}"; do
+    box_listening "$port" || continue
+    code=$(ssh "${ssh_opts[@]}" "$host" 'read -r u; curl -s -m 15 -o /dev/null -w "%{http_code}" "$u"' <<< "$url")
+    log "handed the callback for port $port to $host (HTTP ${code:-none})"
+    [[ $code == 2* || $code == 3* ]]
+    return
+  done
+  log "nothing on ${hosts[*]} is waiting on port $port (the CLI timed out?): start the sign-in again"
+  return 1
+}
+
 case ${1:-} in
+  http://localhost:* | http://127.0.0.1:*)
+    deliver_callback "$1"
+    ;;
   --watch)
     for h in "${hosts[@]}"; do
       (
