@@ -88,7 +88,6 @@ patchutils
 pavucontrol
 playerctl
 polkit-gnome
-postman-bin
 powershell
 qbittorrent
 qemu-base
