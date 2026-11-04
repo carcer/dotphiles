@@ -48,7 +48,6 @@ herdr
 -cask docker-compose
 watchman
 --cask spotify
---cask postman
 pnpm
 xcodesorg/made/xcodes
 --cask microsoft-teams

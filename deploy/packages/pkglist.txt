@@ -93,7 +93,6 @@ patchutils
 pavucontrol
 playerctl
 polkit-gnome
-postman-bin
 powershell
 proton-ge-custom-bin
 qbittorrent
