@@ -10,6 +10,9 @@
 # in it changed for DPT_TMP_PRUNE_DAYS days (default 3) and no live process has
 # its working directory or an open file inside it, so a long-running dev server
 # in an old scratchpad worktree survives. Empty dirs are tidied afterwards.
+# A unit holding git worktrees leaves their records in the owning repo, which
+# breaks `sechroom lane` and the reporter's lane census, so each such repo gets
+# a `git worktree prune` once the run is done.
 #
 #   dpt-tmp-prune        prune
 #   dpt-tmp-prune -n     list what would go, delete nothing
@@ -56,6 +59,23 @@ units() {
   return 0
 }
 
+# The common git dir of each worktree checked out in a unit (a `.git` file, not
+# a dir), at any depth a lane uses: the unit itself, a checkout in it, or a
+# session's scratchpad/<name>.
+worktree_commons() {
+  local f dir gd
+  while IFS= read -r f; do
+    gd=$(sed -n 's/^gitdir: //p' "$f" 2>/dev/null)
+    [[ -n "$gd" ]] || continue
+    dir=$(dirname "$f")
+    # Resolve a relative gitdir now: it goes through the unit, which is deleted next.
+    [[ "$gd" == /* ]] || gd=$(realpath -m -- "$dir/$gd")
+    [[ "$gd" == */worktrees/* ]] && printf '%s\n' "${gd%/worktrees/*}"
+  done < <(find "$1" -maxdepth 4 -name .git -type f 2>/dev/null)
+  return 0
+}
+
+declare -A commons=()
 freed=0
 while IFS= read -r unit; do
   [[ -n "$(find "$unit" -newermt "-$days days" -print -quit 2>/dev/null)" ]] && continue
@@ -65,6 +85,9 @@ while IFS= read -r unit; do
   if (( dry_run )); then
     echo "would remove ${kb}K $unit"
   else
+    while IFS= read -r c; do
+      [[ -n "$c" ]] && commons[$c]=1
+    done < <(worktree_commons "$unit")
     echo "removing ${kb}K $unit"
     rm -rf -- "$unit"
   fi
@@ -72,6 +95,14 @@ done < <(units)
 
 if (( ! dry_run )); then
   find "$root" -mindepth 2 -type d -empty -mmin "+$((days * 1440))" -delete 2>/dev/null || true
+  for c in "${!commons[@]}"; do
+    [[ -d "$c" ]] || continue
+    if git --git-dir="$c" worktree prune 2>/dev/null; then
+      echo "pruned worktree records in $c"
+    else
+      echo "dpt-tmp-prune: worktree prune failed in $c" >&2
+    fi
+  done
 fi
 
 echo "dpt-tmp-prune: $((freed / 1024))M $([[ $dry_run == 1 ]] && echo reclaimable || echo freed) under $root"
