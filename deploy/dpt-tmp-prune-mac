@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Run bin/dpt-tmp-prune every six hours as a launchd agent on the Mac, as
+# systemd/user/dpt-tmp-prune.timer does on the runners. Safe to run again: the
+# agent is replaced.
+#   deploy/dpt-tmp-prune-mac            install or replace
+#   deploy/dpt-tmp-prune-mac --remove   remove
+
+set -euo pipefail
+
+label=com.ocd.dpt-tmp-prune
+plist=$HOME/Library/LaunchAgents/$label.plist
+
+launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
+if [[ ${1:-} == --remove ]]; then
+  rm -f "$plist"
+  exit 0
+fi
+
+mkdir -p "$HOME/Library/LaunchAgents" "$HOME/Library/Logs"
+cat > "$plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>$label</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/bash</string>
+    <string>$HOME/.dotfiles/bin/dpt-tmp-prune</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict><key>PATH</key><string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string></dict>
+  <key>StartInterval</key><integer>21600</integer>
+  <key>Nice</key><integer>19</integer>
+  <key>LowPriorityIO</key><true/>
+  <key>ProcessType</key><string>Background</string>
+  <key>StandardOutPath</key><string>$HOME/Library/Logs/dpt-tmp-prune.log</string>
+  <key>StandardErrorPath</key><string>$HOME/Library/Logs/dpt-tmp-prune.log</string>
+</dict>
+</plist>
+PLIST
+launchctl bootstrap "gui/$(id -u)" "$plist"
