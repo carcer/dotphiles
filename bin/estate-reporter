@@ -115,14 +115,27 @@ host_block() {
       dnsReachable: $dns, dotnetOccupiedSlots: ($slots | num), cargoOccupiedSlots: ($cargo | num) }'
 }
 
-# A CLI without the verb (or ESTATE_REPORTER_HOST_HEALTH=0) skips it; checked each
-# pass so a new CLI install switches it on without a restart.
+# Each CLI call gets a time limit, so one slow call under load can't stall the pass
+# past the estate page's 120 s stale window.
+call_timeout=${ESTATE_REPORTER_CALL_TIMEOUT:-45}
+cli() {
+  if command -v timeout >/dev/null; then timeout -k 5 "$call_timeout" "$bin" --tenant ocd "$@"
+  else "$bin" --tenant ocd "$@"; fi
+}
+
+# A CLI without the verb (or ESTATE_REPORTER_HOST_HEALTH=0) skips it. Rechecked every
+# tenth pass, so a new CLI install switches it on without a restart.
+has_health=0
 report_health() {
   [[ ${ESTATE_REPORTER_HOST_HEALTH:-1} == 1 ]] || return 0
-  "$bin" estate --help 2>/dev/null | grep -q 'report-health' || return 0
+  if (( pass % 10 == 0 )); then
+    has_health=0
+    "$bin" estate --help 2>/dev/null | grep -q 'report-health' && has_health=1
+  fi
+  (( has_health )) || return 0
   host_block > "$block.new" && mv "$block.new" "$block" || { echo "$ts host: collect failed" >> "$log"; return 0; }
   local hout hrc
-  hout=$("$bin" --tenant ocd estate report-health "$estate" --host "$host" --file "$block" 2>&1)
+  hout=$(cli estate report-health "$estate" --host "$host" --file "$block" 2>&1)
   hrc=$?
   echo "$ts host rc=$hrc $(printf '%s' "$hout" | tail -2 | tr '\n' ' ' | cut -c1-200)" >> "$log"
 }
@@ -131,22 +144,36 @@ report_health() {
 [[ ${ESTATE_REPORTER_PRINT:-0} == 1 ]] && { host_block; exit; }
 
 auth_failures=0
+pass=0
 while true; do
+  started=$SECONDS
   ts=$(date -u +%FT%TZ)
-  out=$("$bin" --tenant ocd estate report "$estate" --host "$host" 2>&1)
-  rc=$?
-  echo "$ts rc=$rc $(printf '%s' "$out" | tail -3 | tr '\n' ' ' | cut -c1-300)" >> "$log"
+  # Host facts first: they're cheap, and keep the host fresh when the lane report is slow.
   report_health
+  out=$(cli estate report "$estate" --host "$host" 2>&1)
+  rc=$?
+  # The CLI reads its bearer once per command and doesn't retry a 401, so a token that
+  # expires during a slow run fails the pass; a new process refreshes it.
+  if [[ $rc -ne 0 ]] && printf '%s' "$out" | grep -q 'HTTP 401'; then
+    echo "$ts rc=$rc 401, retrying with a fresh token" >> "$log"
+    out=$(cli estate report "$estate" --host "$host" 2>&1)
+    rc=$?
+  fi
+  [[ $rc -eq 124 ]] && out="timed out after ${call_timeout}s"
+  echo "$ts rc=$rc $(printf '%s' "$out" | tail -3 | tr '\n' ' ' | cut -c1-300)" >> "$log"
   [ "$(wc -l < "$log")" -gt 2000 ] && tail -1000 "$log" > "$log.new" && mv "$log.new" "$log"
 
   if [[ $rc -eq 0 ]]; then
     auth_failures=0
     rm -f "$alert"
-  elif printf '%s' "$out" | grep -qiE 'unauthenticated|session expired|re-authenticate|sechroom login'; then
+  elif printf '%s' "$out" | grep -qiE 'HTTP 401|unauthenticated|session expired|re-authenticate|sechroom login'; then
     auth_failures=$((auth_failures + 1))
     if [[ $auth_failures -ge 3 ]]; then
       echo "$ts $host: $auth_failures auth failures reporting $estate; try: sechroom login" | tee "$alert" >&2
     fi
   fi
-  sleep "$interval"
+  pass=$((pass + 1))
+  # A fixed cadence: the pass's own time counts against the interval.
+  wait=$((interval - (SECONDS - started)))
+  (( wait > 0 )) && sleep "$wait"
 done
