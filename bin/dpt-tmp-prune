@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prune stale estate lane temp under ~/.cache/dpt-tmp on sc-dev-01.
+# Prune stale estate lane temp under ~/.cache/dpt-tmp on the lane runners and the Mac.
 #
 # zshenv points each estate lane's TMPDIR at ~/.cache/dpt-tmp/<estate>-<lane> and
 # CLAUDE_CODE_TMPDIR at <lane>/claude. Unlike the /tmp tmpfs they replaced,
@@ -17,7 +17,8 @@
 #   dpt-tmp-prune        prune
 #   dpt-tmp-prune -n     list what would go, delete nothing
 #
-# Run by systemd/user/dpt-tmp-prune.timer.
+# Run by systemd/user/dpt-tmp-prune.timer, and on the Mac by the launchd agent
+# deploy/dpt-tmp-prune-mac installs. Needs bash 4 (Homebrew's on the Mac).
 
 set -euo pipefail
 
@@ -27,15 +28,25 @@ dry_run=0
 [[ "${1:-}" == -n ]] && dry_run=1
 
 [[ -d "$root" ]] || exit 0
+# The real path, as lsof and /proc report it (/var is /private/var on macOS).
+root=$(cd "$root" && pwd -P)
 
 # Paths live processes hold inside the root: working directories and open files.
+# With no way to see them, nothing is deleted: an empty list would mean "all idle".
 busy=()
-for proc in /proc/[0-9]*; do
-  for link in "$proc/cwd" "$proc"/fd/*; do
-    target=$(readlink "$link" 2>/dev/null) || continue
-    [[ "$target" == "$root/"* ]] && busy+=("$target")
+if [[ -d /proc/self/fd ]]; then
+  for proc in /proc/[0-9]*; do
+    for link in "$proc/cwd" "$proc"/fd/*; do
+      target=$(readlink "$link" 2>/dev/null) || continue
+      [[ "$target" == "$root/"* ]] && busy+=("$target")
+    done
   done
-done
+else
+  open=$(lsof -n -w -u "$(id -un)" -Fn 2>/dev/null) || { echo "dpt-tmp-prune: lsof failed" >&2; exit 1; }
+  while IFS= read -r target; do
+    [[ "$target" == "$root/"* ]] && busy+=("$target")
+  done < <(printf '%s\n' "$open" | sed -n 's/^n//p')
+fi
 
 in_use() {
   local unit=$1 path
@@ -53,8 +64,7 @@ units() {
       [[ -e "$entry" && "$entry" != "$lane/claude" ]] && printf '%s\n' "$entry"
     done
     [[ -d "$lane/claude" ]] && find "$lane/claude" -mindepth 3 -maxdepth 3 -type d \
-      -regextype posix-extended \
-      -regex '.*/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+      -name '????????-????-????-????-????????????'
   done
   return 0
 }
@@ -69,7 +79,7 @@ worktree_commons() {
     [[ -n "$gd" ]] || continue
     dir=$(dirname "$f")
     # Resolve a relative gitdir now: it goes through the unit, which is deleted next.
-    [[ "$gd" == /* ]] || gd=$(realpath -m -- "$dir/$gd")
+    [[ "$gd" == /* ]] || gd=$(cd "$dir/${gd%/*}" 2>/dev/null && echo "$(pwd -P)/${gd##*/}") || continue
     [[ "$gd" == */worktrees/* ]] && printf '%s\n' "${gd%/worktrees/*}"
   done < <(find "$1" -maxdepth 4 -name .git -type f 2>/dev/null)
   return 0
@@ -78,7 +88,7 @@ worktree_commons() {
 declare -A commons=()
 freed=0
 while IFS= read -r unit; do
-  [[ -n "$(find "$unit" -newermt "-$days days" -print -quit 2>/dev/null)" ]] && continue
+  [[ -n "$(find "$unit" -mmin "-$((days * 1440))" -print 2>/dev/null | head -1)" ]] && continue
   in_use "$unit" && continue
   kb=$(du -sk "$unit" 2>/dev/null | cut -f1)
   freed=$((freed + ${kb:-0}))
