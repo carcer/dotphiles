@@ -37,12 +37,106 @@ mkdir -p "$dir" "${alert%/*}"
 # Fixed so the tenant can't follow whichever checkout a shell happened to be in.
 cd "$dir" || exit 1
 
+# Host health (SBC-2222): one observation block per pass beside the lanes, sent with
+# `estate report-health` once the CLI has it. Anything not measured goes as null,
+# which the estate page shows as "not reported", never 0.
+api=${ESTATE_REPORTER_API:-https://app.sechroom.ai}
+case $estate in
+  sechroom) estate_root=$HOME/development/projects/sechroom-estate ;;
+  freedivr) estate_root=$HOME/development/projects/didactic-palm-tree-estate ;;
+  abcs) estate_root=$HOME/development/projects/abcs ;;
+  *) estate_root=$HOME ;;
+esac
+[[ -d $estate_root ]] || estate_root=$HOME
+block=$dir/$estate.host.json
+
+first_word() { "$@" 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+[0-9A-Za-z.+-]*' | head -1; }
+
+# Lock dirs of the estates' integration-host-lock.sh: test slots are dpt-integration.lock.d
+# and dpt-integration-<n>.lock.d; the build pool's -build locks aren't counted.
+slots_held() { ls -1 "${DPT_LOCK_ROOT:-/tmp}/" 2>/dev/null | grep -cE "$1"; }
+
+host_block() {
+  local cores load1 load5 load15 mem_avail mem_total disk api_out api_rc code secs ip
+  local api_ok=null latency=null category=null dns=null
+  if [[ $(uname) == Darwin ]]; then
+    cores=$(/usr/sbin/sysctl -n hw.logicalcpu)
+    read -r load1 load5 load15 < <(/usr/sbin/sysctl -n vm.loadavg | tr -d '{}')
+    mem_total=$(/usr/sbin/sysctl -n hw.memsize)
+    # Free, inactive and speculative pages are what macOS hands out without swapping.
+    mem_avail=$(vm_stat | awk -v ps="$(/usr/sbin/sysctl -n hw.pagesize)" '
+      /^Pages (free|inactive|speculative):/ { gsub(/\./, "", $NF); n += $NF } END { if (n && ps) print n * ps }')
+  else
+    cores=$(nproc)
+    read -r load1 load5 load15 _ < /proc/loadavg
+    mem_total=$(awk '/^MemTotal:/ { print $2 * 1024 }' /proc/meminfo)
+    mem_avail=$(awk '/^MemAvailable:/ { print $2 * 1024 }' /proc/meminfo)
+  fi
+  disk=$(df -Pk "$estate_root" | awk 'NR == 2 { print $4 * 1024, $2 * 1024 }')
+
+  api_out=$(curl -s -o /dev/null -m 10 -w '%{http_code} %{time_total} %{remote_ip}' "$api/healthz")
+  api_rc=$?
+  read -r code secs ip <<< "$api_out"
+  [[ -n $ip ]] && dns=true
+  case $api_rc in
+    0)
+      if [[ $code == 2* ]]; then api_ok=true; latency=$(awk -v s="$secs" 'BEGIN { printf "%.0f", s * 1000 }')
+      elif [[ $code == 503 ]]; then api_ok=false; category='"unavailable"'
+      else api_ok=false; category='"http"'; fi ;;
+    6) api_ok=false; category='"dns"'; dns=false ;;
+    28) api_ok=false; category='"timeout"' ;;
+    7) api_ok=false; category='"connection"' ;;
+    35|51|58|60) api_ok=false; category='"tls"' ;;
+    *) api_ok=false; category='"connection"' ;;
+  esac
+
+  jq -n \
+    --arg sampled "$(date -u +%FT%TZ)" \
+    --arg cli "$(first_word "$bin" --version)" \
+    --arg claude "$(first_word claude --version)" \
+    --arg codex "$(first_word codex --version)" \
+    --arg cores "$cores" --arg l1 "$load1" --arg l5 "$load5" --arg l15 "$load15" \
+    --arg mem_avail "$mem_avail" --arg mem_total "$mem_total" \
+    --arg disk_free "${disk% *}" --arg disk_total "${disk#* }" \
+    --argjson api_ok "$api_ok" --argjson latency "$latency" --argjson category "$category" \
+    --argjson dns "$dns" \
+    --arg slots "$(slots_held '^dpt-integration(-[0-9]+)?\.lock\.d$')" \
+    --arg cargo "$(slots_held '^dpt-integration-cargo\.lock\.d$')" '
+    def str: if . == "" then null else . end;
+    def num: if . == "" then null else tonumber end;
+    def per_cpu: if . == "" or $cores == "" or ($cores | tonumber) == 0 then null
+      else ((tonumber / ($cores | tonumber)) * 100 | round / 100) end;
+    { sampledAt: $sampled, cliVersion: ($cli | str), claudeVersion: ($claude | str), codexVersion: ($codex | str),
+      normalizedLoad1Minute: ($l1 | per_cpu), normalizedLoad5Minutes: ($l5 | per_cpu),
+      normalizedLoad15Minutes: ($l15 | per_cpu), loadUnit: (if $l1 == "" then null else "per-logical-cpu" end),
+      availableMemoryBytes: ($mem_avail | num), totalMemoryBytes: ($mem_total | num),
+      freeDiskBytes: ($disk_free | num), totalDiskBytes: ($disk_total | num),
+      apiReachable: $api_ok, apiLatencyMilliseconds: $latency, apiFailureCategory: $category,
+      dnsReachable: $dns, dotnetOccupiedSlots: ($slots | num), cargoOccupiedSlots: ($cargo | num) }'
+}
+
+# A CLI without the verb (or ESTATE_REPORTER_HOST_HEALTH=0) skips it; checked each
+# pass so a new CLI install switches it on without a restart.
+report_health() {
+  [[ ${ESTATE_REPORTER_HOST_HEALTH:-1} == 1 ]] || return 0
+  "$bin" estate --help 2>/dev/null | grep -q 'report-health' || return 0
+  host_block > "$block.new" && mv "$block.new" "$block" || { echo "$ts host: collect failed" >> "$log"; return 0; }
+  local hout hrc
+  hout=$("$bin" --tenant ocd estate report-health "$estate" --host "$host" --file "$block" 2>&1)
+  hrc=$?
+  echo "$ts host rc=$hrc $(printf '%s' "$hout" | tail -2 | tr '\n' ' ' | cut -c1-200)" >> "$log"
+}
+
+# ESTATE_REPORTER_PRINT=1 estate-reporter <estate>: print one host block and exit.
+[[ ${ESTATE_REPORTER_PRINT:-0} == 1 ]] && { host_block; exit; }
+
 auth_failures=0
 while true; do
   ts=$(date -u +%FT%TZ)
   out=$("$bin" --tenant ocd estate report "$estate" --host "$host" 2>&1)
   rc=$?
   echo "$ts rc=$rc $(printf '%s' "$out" | tail -3 | tr '\n' ' ' | cut -c1-300)" >> "$log"
+  report_health
   [ "$(wc -l < "$log")" -gt 2000 ] && tail -1000 "$log" > "$log.new" && mv "$log.new" "$log"
 
   if [[ $rc -eq 0 ]]; then
